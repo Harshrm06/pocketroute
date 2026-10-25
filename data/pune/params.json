@@ -1,0 +1,73 @@
+{
+  "effectiveFrom": "2026-10-01",
+  "source": "PRD.md Section 6 & 14.2",
+  "budget": {
+    "minINR": 10,
+    "maxINR": 300
+  },
+  "speeds": {
+    "walk": {
+      "mPerMin": 80,
+      "kmPerH": 4.8
+    },
+    "metro": {
+      "kmPerH": 34
+    },
+    "bus": {
+      "peakKmPerH": 18,
+      "midKmPerH": 20,
+      "offPeakKmPerH": 22
+    },
+    "auto": {
+      "kmPerH": 26
+    },
+    "cab": {
+      "kmPerH": 29
+    }
+  },
+  "penalties": {
+    "minTransferMin": 1,
+    "metroBoardingPenaltyMin": 3,
+    "autoPickupMin": 2.5,
+    "cabPickupMin": 4.5,
+    "maxWalkLegM": 1200,
+    "fallbackMaxWalkLegM": 2000
+  },
+  "headways": {
+    "metro": {
+      "peakMin": 6,
+      "offPeakMin": 10
+    }
+  },
+  "operatingHours": {
+    "metro": {
+      "start": "06:00",
+      "end": "22:00",
+      "startMin": 360,
+      "endMin": 1320
+    }
+  },
+  "windows": {
+    "peak": [
+      { "start": "08:00", "end": "11:00", "startMin": 480, "endMin": 660 },
+      { "start": "17:00", "end": "20:30", "startMin": 1020, "endMin": 1230 }
+    ],
+    "mid": {
+      "start": "11:00",
+      "end": "17:00",
+      "startMin": 660,
+      "endMin": 1020
+    },
+    "night": { "start": "00:00", "end": "05:00", "startMin": 0, "endMin": 300 }
+  },
+  "surges": {
+    "cabRushMultiplier": 1.3,
+    "autoNightMultiplier": 1.25
+  },
+  "boundingBox": {
+    "minLat": 18.4,
+    "maxLat": 18.7,
+    "minLng": 73.7,
+    "maxLng": 74.0
+  }
+}

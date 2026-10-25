@@ -1,0 +1,515 @@
+{
+  "effectiveFrom": "2026-10-01",
+  "source": "PMPML published corridor schedules (indicative draft for DAA MVP)",
+  "routes": [
+    {
+      "routeNo": "2",
+      "label": "Katraj to Shivajinagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b2_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "b2_bharati_vidyapeeth",
+          "name": "Bharati Vidyapeeth",
+          "lat": 18.4578,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b2_padmavati",
+          "name": "Padmavati",
+          "lat": 18.4712,
+          "lng": 73.8561,
+          "segmentDistanceKm": 1.8
+        },
+        {
+          "id": "b2_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.6
+        },
+        {
+          "id": "b2_shaniwar_wada",
+          "name": "Shaniwar Wada",
+          "lat": 18.5195,
+          "lng": 73.8553,
+          "segmentDistanceKm": 1.5
+        },
+        {
+          "id": "b2_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "24",
+      "label": "Katraj to Pune Station",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b24_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 1.8
+        },
+        {
+          "id": "b24_balaji_nagar",
+          "name": "Balaji Nagar",
+          "lat": 18.4632,
+          "lng": 73.8555,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b24_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b24_seven_loves",
+          "name": "Seven Loves Chowk",
+          "lat": 18.5078,
+          "lng": 73.8682,
+          "segmentDistanceKm": 2.2
+        },
+        {
+          "id": "b24_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "103",
+      "label": "Katraj to Kothrud Stand",
+      "firstDeparture": 375,
+      "peakHeadway": 12,
+      "offPeakHeadway": 18,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b103_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 1.9
+        },
+        {
+          "id": "b103_dhankawadi",
+          "name": "Dhankawadi",
+          "lat": 18.4615,
+          "lng": 73.8512,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b103_vitthalwadi",
+          "name": "Vitthalwadi",
+          "lat": 18.4842,
+          "lng": 73.8378,
+          "segmentDistanceKm": 2.3
+        },
+        {
+          "id": "b103_karve_nagar",
+          "name": "Karve Nagar",
+          "lat": 18.4912,
+          "lng": 73.8182,
+          "segmentDistanceKm": 1.7
+        },
+        {
+          "id": "b103_kothrud_stand",
+          "name": "Kothrud Stand",
+          "lat": 18.5042,
+          "lng": 73.8125,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "149",
+      "label": "Nigdi to Hadapsar",
+      "firstDeparture": 360,
+      "peakHeadway": 12,
+      "offPeakHeadway": 20,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b149_nigdi",
+          "name": "Nigdi Bus Stand",
+          "lat": 18.6534,
+          "lng": 73.7712,
+          "segmentDistanceKm": 2.4
+        },
+        {
+          "id": "b149_chinchwad",
+          "name": "Chinchwad Station",
+          "lat": 18.6361,
+          "lng": 73.7915,
+          "segmentDistanceKm": 3.1
+        },
+        {
+          "id": "b149_kasarwadi",
+          "name": "Kasarwadi",
+          "lat": 18.5975,
+          "lng": 73.8211,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b149_dapodi",
+          "name": "Dapodi",
+          "lat": 18.5682,
+          "lng": 73.8344,
+          "segmentDistanceKm": 4.1
+        },
+        {
+          "id": "b149_shivajinagar",
+          "name": "Shivajinagar",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b149_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 4.5
+        },
+        {
+          "id": "b149_magarpatta",
+          "name": "Magarpatta City",
+          "lat": 18.5142,
+          "lng": 73.9275,
+          "segmentDistanceKm": 2.2
+        },
+        {
+          "id": "b149_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "204",
+      "label": "Hadapsar to Chinchwad",
+      "firstDeparture": 360,
+      "peakHeadway": 12,
+      "offPeakHeadway": 20,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b204_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b204_fatima_nagar",
+          "name": "Fatima Nagar",
+          "lat": 18.5052,
+          "lng": 73.9015,
+          "segmentDistanceKm": 3.4
+        },
+        {
+          "id": "b204_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 5.2
+        },
+        {
+          "id": "b204_dapodi",
+          "name": "Dapodi",
+          "lat": 18.5682,
+          "lng": 73.8344,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b204_kasarwadi",
+          "name": "Kasarwadi",
+          "lat": 18.5975,
+          "lng": 73.8211,
+          "segmentDistanceKm": 3.1
+        },
+        {
+          "id": "b204_chinchwad",
+          "name": "Chinchwad Station",
+          "lat": 18.6361,
+          "lng": 73.7915,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "BRT_1",
+      "label": "Rainbow BRT: Swargate to Katraj",
+      "firstDeparture": 360,
+      "peakHeadway": 6,
+      "offPeakHeadway": 10,
+      "verified": false,
+      "notes": "PMPML Rainbow BRT dedicated median corridor; pending GTFS live cross-check",
+      "stops": [
+        {
+          "id": "brt1_swargate",
+          "name": "Swargate BRT",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "brt1_natu_baug",
+          "name": "Natu Baug BRT",
+          "lat": 18.4912,
+          "lng": 73.8552,
+          "segmentDistanceKm": 1.1
+        },
+        {
+          "id": "brt1_padmavati",
+          "name": "Padmavati BRT",
+          "lat": 18.4712,
+          "lng": 73.8561,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "brt1_balaji_nagar",
+          "name": "Balaji Nagar BRT",
+          "lat": 18.4632,
+          "lng": 73.8555,
+          "segmentDistanceKm": 1.1
+        },
+        {
+          "id": "brt1_bharati_vidyapeeth",
+          "name": "Bharati Vidyapeeth BRT",
+          "lat": 18.4578,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "brt1_katraj",
+          "name": "Katraj BRT Terminal",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "111",
+      "label": "Swargate to Pune Station",
+      "firstDeparture": 360,
+      "peakHeadway": 8,
+      "offPeakHeadway": 12,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b111_swargate",
+          "name": "Swargate Bus Stand",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.1
+        },
+        {
+          "id": "b111_sarasbaug",
+          "name": "Saras Baug",
+          "lat": 18.5032,
+          "lng": 73.8515,
+          "segmentDistanceKm": 1.8
+        },
+        {
+          "id": "b111_golibar",
+          "name": "Golibar Maidan",
+          "lat": 18.5065,
+          "lng": 73.8732,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "b111_pulgate",
+          "name": "Pulgate (Camp)",
+          "lat": 18.5118,
+          "lng": 73.8812,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b111_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "115",
+      "label": "Pune Station to Hinjawadi Phase 3",
+      "firstDeparture": 370,
+      "peakHeadway": 8,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b115_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b115_shivajinagar",
+          "name": "Shivajinagar",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 2.4
+        },
+        {
+          "id": "b115_pune_univ",
+          "name": "Savitribai Phule Pune University",
+          "lat": 18.5528,
+          "lng": 73.8242,
+          "segmentDistanceKm": 2.3
+        },
+        {
+          "id": "b115_aundh",
+          "name": "Aundh Gaon",
+          "lat": 18.5632,
+          "lng": 73.8078,
+          "segmentDistanceKm": 3.8
+        },
+        {
+          "id": "b115_wakad",
+          "name": "Wakad Bridge",
+          "lat": 18.5982,
+          "lng": 73.7628,
+          "segmentDistanceKm": 2.5
+        },
+        {
+          "id": "b115_hinjawadi_p1",
+          "name": "Hinjawadi Shivaji Chowk (Phase 1)",
+          "lat": 18.5912,
+          "lng": 73.7385,
+          "segmentDistanceKm": 3.1
+        },
+        {
+          "id": "b115_hinjawadi_p3",
+          "name": "Megapolis Circle (Phase 3)",
+          "lat": 18.5824,
+          "lng": 73.7112,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "174",
+      "label": "Kothrud Depot to Pune Station",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b174_kothrud_depot",
+          "name": "Kothrud Depot",
+          "lat": 18.5028,
+          "lng": 73.7942,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b174_nal_stop",
+          "name": "Nal Stop",
+          "lat": 18.5132,
+          "lng": 73.834,
+          "segmentDistanceKm": 1.6
+        },
+        {
+          "id": "b174_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b174_shivajinagar",
+          "name": "Shivajinagar",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b174_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ]
+    },
+    {
+      "routeNo": "208",
+      "label": "Swargate to Hadapsar Gadital",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "stops": [
+        {
+          "id": "b208_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.6
+        },
+        {
+          "id": "b208_golibar",
+          "name": "Golibar Maidan",
+          "lat": 18.5065,
+          "lng": 73.8732,
+          "segmentDistanceKm": 2.2
+        },
+        {
+          "id": "b208_fatima_nagar",
+          "name": "Fatima Nagar",
+          "lat": 18.5052,
+          "lng": 73.9015,
+          "segmentDistanceKm": 2.7
+        },
+        {
+          "id": "b208_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 0
+        }
+      ]
+    }
+  ]
+}

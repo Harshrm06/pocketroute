@@ -1,0 +1,37 @@
+{
+  "name": "pocketroute",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0 && prettier --check .",
+    "typecheck": "tsc --noEmit && pnpm -r typecheck",
+    "test": "node scripts/test-runner.js",
+    "build": "pnpm -r build",
+    "validate-data": "tsx scripts/validate-data.ts",
+    "build-geometry": "tsx scripts/build-geometry.ts",
+    "bench": "tsx scripts/bench.ts",
+    "test:e2e": "playwright test",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "9.39.1",
+    "@playwright/test": "^1.64.1",
+    "@pocketroute/engine": "workspace:*",
+    "@pocketroute/shared": "workspace:*",
+    "@types/node": "20.19.9",
+    "eslint": "9.39.1",
+    "eslint-config-prettier": "10.1.8",
+    "prettier": "3.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.2",
+    "vitest": "3.2.4",
+    "zod": "^4.6.7"
+  }
+}

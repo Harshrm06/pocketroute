@@ -1,0 +1,234 @@
+{
+  "effectiveFrom": "2026-10-01",
+  "source": "Pune Metro official station list, cross-checked with OpenStreetMap (OSM)",
+  "lines": [
+    {
+      "id": "METRO_PURPLE",
+      "name": "Purple Line",
+      "corridor": "PCMC to Swargate",
+      "color": "#7C3AED",
+      "stations": [
+        {
+          "id": "purple_pcmc",
+          "name": "PCMC Bhavan",
+          "lat": 18.6298,
+          "lng": 73.8031,
+          "verified": true
+        },
+        {
+          "id": "purple_sant_tukaram_nagar",
+          "name": "Sant Tukaram Nagar",
+          "lat": 18.6214,
+          "lng": 73.8105,
+          "verified": true
+        },
+        {
+          "id": "purple_bhosari",
+          "name": "Bhosari (Nashik Phata)",
+          "lat": 18.6112,
+          "lng": 73.8163,
+          "verified": true
+        },
+        {
+          "id": "purple_kasarwadi",
+          "name": "Kasarwadi",
+          "lat": 18.5975,
+          "lng": 73.8211,
+          "verified": true
+        },
+        {
+          "id": "purple_phugewadi",
+          "name": "Phugewadi",
+          "lat": 18.5834,
+          "lng": 73.8262,
+          "verified": true
+        },
+        {
+          "id": "purple_dapodi",
+          "name": "Dapodi",
+          "lat": 18.5682,
+          "lng": 73.8344,
+          "verified": true
+        },
+        {
+          "id": "purple_bopodi",
+          "name": "Bopodi",
+          "lat": 18.5551,
+          "lng": 73.842,
+          "verified": true
+        },
+        {
+          "id": "purple_khadki",
+          "name": "Khadki",
+          "lat": 18.5412,
+          "lng": 73.849,
+          "verified": true
+        },
+        {
+          "id": "purple_range_hill",
+          "name": "Range Hill",
+          "lat": 18.532,
+          "lng": 73.8465,
+          "verified": true
+        },
+        {
+          "id": "purple_shivaji_nagar",
+          "name": "Shivaji Nagar",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "verified": true
+        },
+        {
+          "id": "purple_civil_court",
+          "name": "District Court (Civil Court)",
+          "lat": 18.5269,
+          "lng": 73.858,
+          "interchangeWith": ["aqua_civil_court"],
+          "verified": true
+        },
+        {
+          "id": "purple_kasba_peth",
+          "name": "Kasba Peth (Budhwar Peth)",
+          "lat": 18.5198,
+          "lng": 73.8561,
+          "verified": true
+        },
+        {
+          "id": "purple_mandai",
+          "name": "Mandai",
+          "lat": 18.5143,
+          "lng": 73.8535,
+          "verified": true
+        },
+        {
+          "id": "purple_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "id": "METRO_AQUA",
+      "name": "Aqua Line",
+      "corridor": "Vanaz to Ramwadi",
+      "color": "#0891B2",
+      "stations": [
+        {
+          "id": "aqua_vanaz",
+          "name": "Vanaz",
+          "lat": 18.5071,
+          "lng": 73.8053,
+          "verified": true
+        },
+        {
+          "id": "aqua_anand_nagar",
+          "name": "Anand Nagar",
+          "lat": 18.5085,
+          "lng": 73.8145,
+          "verified": true
+        },
+        {
+          "id": "aqua_ideal_colony",
+          "name": "Ideal Colony",
+          "lat": 18.509,
+          "lng": 73.8231,
+          "verified": true
+        },
+        {
+          "id": "aqua_nal_stop",
+          "name": "Nal Stop",
+          "lat": 18.5132,
+          "lng": 73.834,
+          "verified": true
+        },
+        {
+          "id": "aqua_garware_college",
+          "name": "Garware College",
+          "lat": 18.5174,
+          "lng": 73.8423,
+          "verified": true
+        },
+        {
+          "id": "aqua_deccan_gymkhana",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "verified": true
+        },
+        {
+          "id": "aqua_chhatrapati_sambhaji_udyan",
+          "name": "Chhatrapati Sambhaji Udyan",
+          "lat": 18.5218,
+          "lng": 73.8542,
+          "verified": true
+        },
+        {
+          "id": "aqua_pmc",
+          "name": "PMC Bhavan",
+          "lat": 18.5245,
+          "lng": 73.855,
+          "verified": true
+        },
+        {
+          "id": "aqua_civil_court",
+          "name": "District Court (Civil Court)",
+          "lat": 18.5269,
+          "lng": 73.858,
+          "interchangeWith": ["purple_civil_court"],
+          "verified": true
+        },
+        {
+          "id": "aqua_mangalwar_peth",
+          "name": "Mangalwar Peth",
+          "lat": 18.5302,
+          "lng": 73.8681,
+          "verified": true
+        },
+        {
+          "id": "aqua_pune_railway_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "verified": true
+        },
+        {
+          "id": "aqua_ruby_hall_clinic",
+          "name": "Ruby Hall Clinic",
+          "lat": 18.5332,
+          "lng": 73.8821,
+          "verified": true
+        },
+        {
+          "id": "aqua_bund_garden",
+          "name": "Bund Garden",
+          "lat": 18.5401,
+          "lng": 73.8872,
+          "verified": true
+        },
+        {
+          "id": "aqua_yerawada",
+          "name": "Yerawada",
+          "lat": 18.5473,
+          "lng": 73.894,
+          "verified": true
+        },
+        {
+          "id": "aqua_kalyani_nagar",
+          "name": "Kalyani Nagar",
+          "lat": 18.5512,
+          "lng": 73.9012,
+          "verified": true
+        },
+        {
+          "id": "aqua_ramwadi",
+          "name": "Ramwadi",
+          "lat": 18.5571,
+          "lng": 73.9097,
+          "verified": true
+        }
+      ]
+    }
+  ]
+}

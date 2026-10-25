@@ -1,0 +1,156 @@
+/* Self-hosted typography imports per PRD §11.1, §14.3 */
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/jetbrains-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens matching PRD §14.2 and §14.4 */
+:root {
+  /* Color tokens (Light mode) */
+  --canvas: #eef2f7;
+  --surface: rgba(255, 255, 255, 0.84);
+  --surface-solid: #ffffff;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+  --border: rgba(15, 23, 42, 0.1);
+  --primary: #0f172a;
+  --primary-contrast: #ffffff;
+  --focus: #2563eb;
+  --success: #047857;
+  --warning: #b45309;
+
+  /* Transit mode tokens */
+  --metro-purple: #7c3aed;
+  --metro-aqua: #0891b2;
+  --bus: #059669;
+  --auto: #d97706;
+  --cab: #4f46e5;
+  --walk: #0284c7;
+
+  /* Elevation tokens (PRD §14.4) */
+  --e1: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --e2: 0 8px 24px -8px rgba(15, 23, 42, 0.18);
+  --e3: 0 20px 48px -12px rgba(15, 23, 42, 0.28);
+}
+
+/* Parallel token set under prefers-color-scheme: dark (PRD §14.2) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #090e1a;
+    --surface: rgba(15, 23, 42, 0.82);
+    --surface-solid: #131d31;
+    --ink: #f8fafc;
+    --ink-muted: #94a3b8;
+    --border: rgba(255, 255, 255, 0.12);
+    --primary: #f8fafc;
+    --primary-contrast: #0f172a;
+    --focus: #3b82f6;
+    --success: #10b981;
+    --warning: #f59e0b;
+
+    /* Mode colors lightened by 10% for dark basemaps per §14.2 */
+    --metro-purple: #8b5cf6;
+    --metro-aqua: #06b6d4;
+    --bus: #10b981;
+    --auto: #f59e0b;
+    --cab: #6366f1;
+    --walk: #38bdf8;
+
+    --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --e2: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
+    --e3: 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Explicit class-based dark mode toggle support */
+[data-theme='dark'] {
+  --canvas: #090e1a;
+  --surface: rgba(15, 23, 42, 0.82);
+  --surface-solid: #131d31;
+  --ink: #f8fafc;
+  --ink-muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.12);
+  --primary: #f8fafc;
+  --primary-contrast: #0f172a;
+  --focus: #3b82f6;
+  --success: #10b981;
+  --warning: #f59e0b;
+
+  --metro-purple: #8b5cf6;
+  --metro-aqua: #06b6d4;
+  --bus: #10b981;
+  --auto: #f59e0b;
+  --cab: #6366f1;
+  --walk: #38bdf8;
+
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --e2: 0 8px 24px -8px rgba(0, 0, 0, 0.45);
+  --e3: 0 20px 48px -12px rgba(0, 0, 0, 0.6);
+}
+
+body {
+  margin: 0;
+  background-color: var(--canvas);
+  color: var(--ink);
+  font-family: Inter, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glass panel floating surface with backdrop filter and solid fallback (PRD §14.2) */
+.glass-surface {
+  background-color: var(--surface);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--border);
+}
+
+@supports not (
+  (backdrop-filter: blur(16px)) or (-webkit-backdrop-filter: blur(16px))
+) {
+  .glass-surface {
+    background-color: var(--surface-solid);
+  }
+}
+
+/* Tabular numerics for times, fares, and metrics (PRD §14.3) */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion budget support (PRD §14.4) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* iOS Safe-Area Insets (PRD §14.6) */
+.safe-area-top {
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+.safe-area-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.safe-area-left {
+  padding-left: max(16px, env(safe-area-inset-left));
+}
+.safe-area-right {
+  padding-right: max(16px, env(safe-area-inset-right));
+}
+.safe-area-inset {
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}

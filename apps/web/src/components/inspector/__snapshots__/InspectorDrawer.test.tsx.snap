@@ -1,0 +1,406 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`InspectorDrawer Component > matches snapshot for Overview tab 1`] = `
+<DocumentFragment>
+  <div
+    class="flex flex-col gap-6 text-ink"
+  >
+    <div
+      class="flex flex-col gap-2"
+    >
+      <h3
+        class="font-display text-base font-bold text-ink"
+      >
+        Multi-Modal RCSPP Algorithm Formulation
+      </h3>
+      <p
+        class="text-xs text-ink-muted leading-relaxed"
+      >
+        The routing engine solves the multi-modal budget-constrained shortest path problem (RCSPP) over a state graph 
+        <span
+          class="font-mono text-ink font-semibold"
+        >
+          S = V × L
+        </span>
+        , using macro-rides (Rule C) to eliminate intra-line boarding penalties and preserve exact slab pricing. Pruning is guided by backward Dijkstra lower bounds for remaining travel time (
+        <span
+          class="font-mono text-ink font-semibold"
+        >
+          LB_t
+        </span>
+        ) and remaining fare (
+        <span
+          class="font-mono text-ink font-semibold"
+        >
+          LB_c
+        </span>
+        ).
+      </p>
+    </div>
+    <div
+      class="flex flex-col gap-2"
+    >
+      <span
+        class="text-xs font-semibold text-ink-muted uppercase tracking-wider"
+      >
+        Query Graph Dimensions (Current Request)
+      </span>
+      <div
+        aria-label="Query graph dimensions table"
+        class="overflow-x-auto rounded-card border border-border bg-surface-solid shadow-e1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        role="region"
+        tabindex="0"
+      >
+        <table
+          class="w-full text-xs text-left"
+        >
+          <thead
+            class="bg-canvas border-b border-border text-[11px] font-mono text-ink-muted uppercase"
+          >
+            <tr>
+              <th
+                class="px-3 py-2"
+              >
+                Parameter
+              </th>
+              <th
+                class="px-3 py-2"
+              >
+                Symbol
+              </th>
+              <th
+                class="px-3 py-2 text-right"
+              >
+                Value
+              </th>
+              <th
+                class="px-3 py-2"
+              >
+                Description
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="divide-y divide-border/60 font-mono text-xs tabular-nums"
+          >
+            <tr>
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                Transit Nodes
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                V
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                142
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Stops, stations, and query endpoints
+              </td>
+            </tr>
+            <tr>
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                Transit Edges
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                E
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                384
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Macro-rides, transfers, feeder & walk legs
+              </td>
+            </tr>
+            <tr>
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                Lines & Modes
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                L
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                12
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Metro lines, bus corridors, feeder modes
+              </td>
+            </tr>
+            <tr>
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                Budget Constraint
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                B
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                ₹75
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Maximum allowable total trip fare
+              </td>
+            </tr>
+            <tr
+              class="bg-canvas/40"
+            >
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                State Space Size
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                S = V × L
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                1,704
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Expanded (node, line) state vertices
+              </td>
+            </tr>
+            <tr
+              class="bg-canvas/40"
+            >
+              <td
+                class="px-3 py-2 font-sans font-medium text-ink"
+              >
+                Expanded Edges
+              </td>
+              <td
+                class="px-3 py-2 font-bold text-primary"
+              >
+                E_S = E × L
+              </td>
+              <td
+                class="px-3 py-2 text-right font-bold text-ink"
+              >
+                4,608
+              </td>
+              <td
+                class="px-3 py-2 font-sans text-ink-muted"
+              >
+                Search space transitions across line states
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div
+      class="flex flex-col gap-3"
+    >
+      <span
+        class="text-xs font-semibold text-ink-muted uppercase tracking-wider"
+      >
+        Algorithm Portfolio & Complexity Classes
+      </span>
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs"
+      >
+        <div
+          class="p-3 rounded-card bg-surface-solid border border-border shadow-e1 flex flex-col gap-1.5"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <span
+              class="font-semibold text-ink"
+            >
+              Algorithm A: Dijkstra TIME
+            </span>
+            <span
+              class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold"
+            >
+              Route A
+            </span>
+          </div>
+          <p
+            class="text-[11px] text-ink-muted leading-relaxed"
+          >
+            Unconstrained arrival time minimization using arrival timestamp as heap priority. Skips same-line consecutive edges (Rule C).
+          </p>
+          <span
+            class="font-mono text-[11px] text-ink font-medium mt-auto"
+          >
+            Bound: O(E*L*log(V*L))
+          </span>
+        </div>
+        <div
+          class="p-3 rounded-card bg-surface-solid border border-border shadow-e1 flex flex-col gap-1.5"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <span
+              class="font-semibold text-ink"
+            >
+              Algorithm B: Dijkstra COST
+            </span>
+            <span
+              class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold"
+            >
+              Route B
+            </span>
+          </div>
+          <p
+            class="text-[11px] text-ink-muted leading-relaxed"
+          >
+            Unconstrained cost minimization using lexicographic (fare, time) priority. Yields the absolute theoretical floor fare LB_c.
+          </p>
+          <span
+            class="font-mono text-[11px] text-ink font-medium mt-auto"
+          >
+            Bound: O(E*L*log(V*L))
+          </span>
+        </div>
+        <div
+          class="p-3 rounded-card bg-surface-solid border border-border shadow-e1 flex flex-col gap-1.5"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <span
+              class="font-semibold text-ink"
+            >
+              Algorithm C: RCSPP Solver
+            </span>
+            <span
+              class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-success/15 text-success font-bold"
+            >
+              Smart Route
+            </span>
+          </div>
+          <p
+            class="text-[11px] text-ink-muted leading-relaxed"
+          >
+            Label-setting Pareto frontier solver with branch-and-bound pruning (P1 budget, P2 time bound vs incumbent, P3 Pareto dominance).
+          </p>
+          <span
+            class="font-mono text-[11px] text-ink font-medium mt-auto"
+          >
+            Bound: O(E*L*B*log(V*L*B))
+          </span>
+        </div>
+        <div
+          class="p-3 rounded-card bg-surface-solid border border-border shadow-e1 flex flex-col gap-1.5"
+        >
+          <div
+            class="flex items-center justify-between"
+          >
+            <span
+              class="font-semibold text-ink"
+            >
+              Algorithm D: Dense DP
+            </span>
+            <span
+              class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-warning/15 text-warning font-bold"
+            >
+              Unit III Ref
+            </span>
+          </div>
+          <p
+            class="text-[11px] text-ink-muted leading-relaxed"
+          >
+            Exact cost-indexed dynamic programming table dp[(v, l)][c] over integers c ∈ [0, B]. Used for cross-check validation and table inspector.
+          </p>
+          <span
+            class="font-mono text-[11px] text-ink font-medium mt-auto"
+          >
+            Bound: Theta(V*L*(B+1))
+          </span>
+        </div>
+      </div>
+    </div>
+    <div
+      class="flex flex-col gap-2"
+    >
+      <span
+        class="text-xs font-semibold text-ink-muted uppercase tracking-wider"
+      >
+        Formal Pseudocode (PRD §8.2, §8.3)
+      </span>
+      <div
+        aria-label="Formal algorithm pseudocode"
+        class="p-4 rounded-card bg-canvas border border-border overflow-x-auto shadow-e1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        role="region"
+        tabindex="0"
+      >
+        <pre
+          class="font-mono text-[11px] text-ink leading-relaxed"
+        >
+          // Algorithm C: Budget-Constrained RCSPP Label-Setting (PRD §8.3)
+RCSPP(G, Origin, Dest, Budget, t0):
+  LB_t = BACKWARD_DIJKSTRA(G, Dest, weight=min_time)
+  LB_c = BACKWARD_DIJKSTRA(G, Dest, weight=min_fare)
+  if LB_c[Origin] &gt; Budget:
+    return INFEASIBLE_WITH_MIN_COST(LB_c[Origin])
+
+  incumbent = +∞; best = null
+  labels[(Origin, NONE)] = {(t0, 0, root)}
+  heap.push((t0, 0, Origin, NONE, root))
+
+  while heap not empty:
+    (t, c, v, l, λ) = heap.pop()
+    if λ is removed_by_dominance: continue
+    if v == Dest:
+      if t &lt; incumbent: incumbent = t; best = λ
+      continue
+
+    for edge in G.out((v, l)):
+      if edge.line == l: continue                       // Rule C (Macro-ride)
+      t' = t_arrive(edge, t); c' = c + edge.fare
+
+      if c' + LB_c[edge.to] &gt; Budget:        continue   // Rule P1: Budget Prune
+      if t' + LB_t[edge.to] &gt;= incumbent:    continue   // Rule P2: Time Bound Prune
+      if DOMINATED(labels[(edge.to, edge.line)], t', c'): continue // Rule P3: Dominance
+
+      REMOVE_DOMINATED_BY(labels[(edge.to, edge.line)], t', c')
+      λ' = (t', c', (edge.to, edge.line), parent=λ)
+      labels[(edge.to, edge.line)].add(λ')
+      heap.push(λ')
+
+  if best == null: return INFEASIBLE
+  return RECONSTRUCT_PATH(best)
+        </pre>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
