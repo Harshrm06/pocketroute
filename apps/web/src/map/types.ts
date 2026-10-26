@@ -80,4 +80,5 @@ export interface MapViewProps {
   userLocation?: { lat: number; lng: number } | null;
   onMyLocationClick?: () => void;
   simulatedCommuter?: { lat: number; lng: number; mode: string } | null;
+  hoveredLegIndex?: number | null;
 }

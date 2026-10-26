@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Clock,
   Layers,
+  Play,
   Sparkles,
   TrendingDown,
   Zap,
@@ -17,6 +18,9 @@ import {
 
 export interface ResultsPanelProps {
   onSelectLeg?: (index: number, leg: Leg) => void;
+  onHoverLeg?: (index: number | null, leg?: Leg | null) => void;
+  onStartSimulation?: () => void;
+  isSimulating?: boolean;
   selectedLegIndex?: number;
   className?: string;
   isMobileSheet?: boolean;
@@ -26,6 +30,9 @@ export type MobileSnapPoint = 'peek' | 'half' | 'full';
 
 export const ResultsPanel: React.FC<ResultsPanelProps> = ({
   onSelectLeg,
+  onHoverLeg,
+  onStartSimulation,
+  isSimulating = false,
   selectedLegIndex,
   className = '',
   isMobileSheet = false,
@@ -283,6 +290,21 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
               </div>
             </div>
 
+            {/* 3B. Simulate Live Commute Button (PRD §22.4) */}
+            <button
+              type="button"
+              data-testid="simulate-commute-btn"
+              onClick={onStartSimulation}
+              className="w-full py-2.5 px-3 rounded-btn bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer shrink-0"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>
+                {isSimulating
+                  ? 'Simulating Live Commute…'
+                  : 'Simulate Live Commute'}
+              </span>
+            </button>
+
             {/* 4. Timeline Ordered List (PRD §14.5, §14.8) */}
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
@@ -319,7 +341,14 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => onSelectLeg?.(idx, leg)}
+                        onClick={() => {
+                          if (isMobileSheet) {
+                            setSnapPoint('half');
+                          }
+                          onSelectLeg?.(idx, leg);
+                        }}
+                        onMouseEnter={() => onHoverLeg?.(idx, leg)}
+                        onMouseLeave={() => onHoverLeg?.(null, null)}
                         className={`w-full text-left p-2.5 rounded-card border transition-all select-none flex flex-col gap-1.5 ${
                           isSelected
                             ? 'bg-surface-solid border-focus ring-1 ring-focus shadow-e1'

@@ -103,6 +103,7 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       userLocation,
       onMyLocationClick,
       simulatedCommuter,
+      hoveredLegIndex,
     },
     ref,
   ) => {
@@ -111,10 +112,12 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
     const markersRef = useRef<Marker[]>([]);
     const userLocationMarkerRef = useRef<Marker | null>(null);
     const commuterMarkerRef = useRef<Marker | null>(null);
+    const commuterModeRef = useRef<string | null>(null);
     const animationFrameRef = useRef<number | null>(null);
     const routeLegsRef = useRef<Leg[]>(extractLegs(initialRoute));
     const allRoutesRef = useRef<MapViewProps['allRoutes']>(allRoutes);
     const selectedIndexRef = useRef<number | undefined>(selectedLegIndex);
+    const hoveredIndexRef = useRef<number | null | undefined>(hoveredLegIndex);
 
     // Track reduced motion preference
     const prefersReducedMotionRef = useRef<boolean>(
@@ -132,9 +135,12 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
     const buildGeoJson = (
       legs: Leg[],
       selectedIdx?: number,
+      hoveredIdx?: number | null,
     ): GeoJSON.FeatureCollection => {
       const features: GeoJSON.Feature[] = legs.map((leg, idx) => {
         const isSelected = selectedIdx !== undefined && selectedIdx === idx;
+        const isHovered =
+          hoveredIdx !== undefined && hoveredIdx !== null && hoveredIdx === idx;
         const isEstimated = leg.geometryQuality === 'estimated';
         const color = getModeColor(leg);
 
@@ -148,6 +154,7 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
             color,
             isEstimated,
             isSelected,
+            isHovered,
           },
           geometry: leg.geometry,
         };
@@ -158,6 +165,26 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
         features,
       };
     };
+
+    // Sync hovered leg preview
+    useEffect(() => {
+      hoveredIndexRef.current = hoveredLegIndex;
+      const map = mapRef.current;
+      if (map && map.isStyleLoaded()) {
+        const source = map.getSource('route-source') as
+          | GeoJSONSource
+          | undefined;
+        if (source) {
+          source.setData(
+            buildGeoJson(
+              routeLegsRef.current,
+              selectedIndexRef.current,
+              hoveredLegIndex,
+            ),
+          );
+        }
+      }
+    }, [hoveredLegIndex]);
 
     // Clears custom HTML markers from map
     const clearMarkers = () => {
@@ -433,7 +460,9 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
           | GeoJSONSource
           | undefined;
         if (source) {
-          source.setData(buildGeoJson(legs, selectedIdx));
+          source.setData(
+            buildGeoJson(legs, selectedIdx, hoveredIndexRef.current),
+          );
         }
       }
     };
@@ -445,7 +474,11 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       // Single GeoJSON source holding all route legs
       map.addSource('route-source', {
         type: 'geojson',
-        data: buildGeoJson(routeLegsRef.current, selectedIndexRef.current),
+        data: buildGeoJson(
+          routeLegsRef.current,
+          selectedIndexRef.current,
+          hoveredIndexRef.current,
+        ),
       });
 
       // Layer 1: Walk Casing (width 5px, white)
@@ -685,6 +718,39 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
         },
       });
 
+      // Layer 10b: Hovered Leg Highlight Casing (cyan glow, +4px)
+      map.addLayer({
+        id: 'layer-hovered-casing',
+        type: 'line',
+        source: 'route-source',
+        filter: ['==', ['get', 'isHovered'], true],
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+        paint: {
+          'line-color': '#38bdf8',
+          'line-width': 10,
+          'line-opacity': 0.85,
+        },
+      });
+
+      // Layer 10c: Hovered Leg Highlight (selected mode stroke, +2px)
+      map.addLayer({
+        id: 'layer-hovered-highlight',
+        type: 'line',
+        source: 'route-source',
+        filter: ['==', ['get', 'isHovered'], true],
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+        paint: {
+          'line-color': ['get', 'color'],
+          'line-width': 8,
+        },
+      });
+
       // Layer 11: Selected Leg Highlight Casing (white, +4px)
       map.addLayer({
         id: 'layer-selected-casing',
@@ -874,11 +940,16 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       setSimulatedCommuter: (point) => {
         const map = mapRef.current;
         if (!map) return;
-        if (commuterMarkerRef.current) {
-          commuterMarkerRef.current.remove();
-          commuterMarkerRef.current = null;
+        if (!point) {
+          if (commuterMarkerRef.current) {
+            commuterMarkerRef.current.remove();
+            commuterMarkerRef.current = null;
+            commuterModeRef.current = null;
+          }
+          return;
         }
-        if (point) {
+
+        if (!commuterMarkerRef.current) {
           const el = document.createElement('div');
           el.className =
             'commuter-marker select-none pointer-events-none transition-transform duration-100';
@@ -887,13 +958,23 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
           el.innerHTML = `
             <div class="px-2 py-1 rounded-pill bg-[#0f172a] text-white border border-white/40 shadow-e3 flex items-center gap-1.5 text-xs font-bold whitespace-nowrap">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
-              <span>${point.mode}</span>
+              <span class="commuter-mode-text">${point.mode}</span>
             </div>
           `;
           const marker = new Marker({ element: el, anchor: 'center' })
             .setLngLat([point.lng, point.lat])
             .addTo(map);
           commuterMarkerRef.current = marker;
+          commuterModeRef.current = point.mode;
+        } else {
+          commuterMarkerRef.current.setLngLat([point.lng, point.lat]);
+          if (commuterModeRef.current !== point.mode) {
+            commuterModeRef.current = point.mode;
+            const textEl = commuterMarkerRef.current
+              .getElement()
+              .querySelector('.commuter-mode-text');
+            if (textEl) textEl.textContent = point.mode;
+          }
         }
       },
 
@@ -1013,11 +1094,16 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
     useEffect(() => {
       const map = mapRef.current;
       if (!map) return;
-      if (commuterMarkerRef.current) {
-        commuterMarkerRef.current.remove();
-        commuterMarkerRef.current = null;
+      if (!simulatedCommuter) {
+        if (commuterMarkerRef.current) {
+          commuterMarkerRef.current.remove();
+          commuterMarkerRef.current = null;
+          commuterModeRef.current = null;
+        }
+        return;
       }
-      if (simulatedCommuter) {
+
+      if (!commuterMarkerRef.current) {
         const el = document.createElement('div');
         el.className =
           'commuter-marker select-none pointer-events-none transition-transform duration-100';
@@ -1026,13 +1112,26 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
         el.innerHTML = `
           <div class="px-2 py-1 rounded-pill bg-[#0f172a] text-white border border-white/40 shadow-e3 flex items-center gap-1.5 text-xs font-bold whitespace-nowrap">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
-            <span>${simulatedCommuter.mode}</span>
+            <span class="commuter-mode-text">${simulatedCommuter.mode}</span>
           </div>
         `;
         const marker = new Marker({ element: el, anchor: 'center' })
           .setLngLat([simulatedCommuter.lng, simulatedCommuter.lat])
           .addTo(map);
         commuterMarkerRef.current = marker;
+        commuterModeRef.current = simulatedCommuter.mode;
+      } else {
+        commuterMarkerRef.current.setLngLat([
+          simulatedCommuter.lng,
+          simulatedCommuter.lat,
+        ]);
+        if (commuterModeRef.current !== simulatedCommuter.mode) {
+          commuterModeRef.current = simulatedCommuter.mode;
+          const textEl = commuterMarkerRef.current
+            .getElement()
+            .querySelector('.commuter-mode-text');
+          if (textEl) textEl.textContent = simulatedCommuter.mode;
+        }
       }
     }, [simulatedCommuter]);
 

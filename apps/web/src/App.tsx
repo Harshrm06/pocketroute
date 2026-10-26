@@ -11,6 +11,10 @@ import { usePlanStore } from './store/plan.js';
 import { api } from './lib/api.js';
 import { Moon, Sun } from 'lucide-react';
 import type { Leg, Route } from '@pocketroute/shared';
+import { LegDetailFloatingCard } from './components/results/LegDetailFloatingCard.js';
+import { CommuteSimulatorHUD } from './components/simulation/CommuteSimulatorHUD.js';
+import { type ModeVariant } from './components/ui/ModeChip.js';
+import { haversineMeters, getPointAtArcLength } from './map/arc-length.js';
 
 // Lazy-load the Inspector and Recharts to keep initial route shell <= 300 KB gzip (PRD §16)
 const InspectorDrawer = React.lazy(() =>
@@ -18,6 +22,81 @@ const InspectorDrawer = React.lazy(() =>
     default: m.InspectorDrawer,
   })),
 );
+
+function getCommuterStateAtProgress(route: Route, progress: number) {
+  const legs = route.legs;
+  if (!legs || legs.length === 0) return null;
+
+  const legDistances = legs.map((leg) => {
+    const coords = (leg.geometry?.coordinates as [number, number][]) ?? [];
+    let d = 0;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const p1 = coords[i];
+      const p2 = coords[i + 1];
+      if (p1 && p2) {
+        d += haversineMeters(p1[1], p1[0], p2[1], p2[0]);
+      }
+    }
+    return Math.max(d, 1);
+  });
+
+  const totalDistance = legDistances.reduce((acc, d) => acc + d, 0);
+  const targetDistance = Math.min(1, Math.max(0, progress)) * totalDistance;
+
+  let acc = 0;
+  let activeLegIdx = 0;
+  for (let i = 0; i < legs.length; i++) {
+    const dist = legDistances[i] ?? 1;
+    if (targetDistance <= acc + dist || i === legs.length - 1) {
+      activeLegIdx = i;
+      break;
+    }
+    acc += dist;
+  }
+
+  const activeLeg = legs[activeLegIdx];
+  if (!activeLeg) return null;
+
+  const legDist = legDistances[activeLegIdx] ?? 1;
+  const legProgress = Math.min(
+    1,
+    Math.max(0, (targetDistance - acc) / legDist),
+  );
+
+  const coords = (activeLeg.geometry?.coordinates as [number, number][]) ?? [];
+  let lat = activeLeg.from.lat;
+  let lng = activeLeg.from.lng;
+
+  if (coords.length > 1) {
+    const arc = getPointAtArcLength(coords, legProgress, 0);
+    if (arc) {
+      lng = arc.point[0];
+      lat = arc.point[1];
+    }
+  }
+
+  let moneySpent = 0;
+  for (let i = 0; i <= activeLegIdx; i++) {
+    const legItem = legs[i];
+    if (legItem) {
+      moneySpent += legItem.fareINR || 0;
+    }
+  }
+
+  const [depH, depM] = (route.departureTime || '09:00').split(':').map(Number);
+  const elapsedMin = Math.round(progress * (route.durationMin || 0));
+  const currentTotalMins = ((depH || 0) * 60 + (depM || 0) + elapsedMin) % 1440;
+  const hStr = String(Math.floor(currentTotalMins / 60)).padStart(2, '0');
+  const mStr = String(currentTotalMins % 60).padStart(2, '0');
+  const currentTime = `${hStr}:${mStr}`;
+
+  return {
+    point: { lat, lng, mode: activeLeg.mode },
+    mode: activeLeg.mode,
+    moneySpent,
+    currentTime,
+  };
+}
 
 export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -39,6 +118,25 @@ export const App: React.FC = () => {
     lng: number;
   } | null>(null);
   const [pinAddress, setPinAddress] = useState<string>('');
+  const [hoveredLegIdx, setHoveredLegIdx] = useState<number | null>(null);
+
+  // Live Commute Simulation State (PRD §22.4)
+  const [isSimulating, setIsSimulating] = useState<boolean>(false);
+  const [isSimPlaying, setIsSimPlaying] = useState<boolean>(false);
+  const [simProgress, setSimProgress] = useState<number>(0);
+  const [simMoneySpent, setSimMoneySpent] = useState<number>(0);
+  const [simCurrentTime, setSimCurrentTime] = useState<string>('00:00');
+  const [simCurrentMode, setSimCurrentMode] = useState<ModeVariant>('WALK');
+  const [simCommuterPoint, setSimCommuterPoint] = useState<{
+    lat: number;
+    lng: number;
+    mode: string;
+  } | null>(null);
+
+  const simRafRef = useRef<number | null>(null);
+  const simStartTimeRef = useRef<number>(0);
+  const simPausedAtRef = useRef<number>(0);
+  const DURATION_MS = 20000;
 
   const {
     result,
@@ -86,18 +184,132 @@ export const App: React.FC = () => {
     }
   };
 
+  const prefersReducedMotion =
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+
+  const updateSimAtProgress = (p: number) => {
+    const state = getCommuterStateAtProgress(activeRoute, p);
+    if (!state) return;
+    setSimProgress(p);
+    setSimCommuterPoint(state.point);
+    setSimCurrentMode(state.mode);
+    setSimMoneySpent(state.moneySpent);
+    setSimCurrentTime(state.currentTime);
+  };
+
+  const handleStartSimulation = () => {
+    setIsSimulating(true);
+    setSimProgress(0);
+    simPausedAtRef.current = 0;
+    updateSimAtProgress(0);
+
+    if (prefersReducedMotion) {
+      setIsSimPlaying(false);
+      return;
+    }
+
+    setIsSimPlaying(true);
+    simStartTimeRef.current = performance.now();
+  };
+
+  const handleTogglePlaySim = () => {
+    if (isSimPlaying) {
+      if (simRafRef.current) {
+        cancelAnimationFrame(simRafRef.current);
+        simRafRef.current = null;
+      }
+      simPausedAtRef.current = simProgress * DURATION_MS;
+      setIsSimPlaying(false);
+    } else {
+      if (simProgress >= 1) {
+        simPausedAtRef.current = 0;
+        setSimProgress(0);
+      }
+      setIsSimPlaying(true);
+      simStartTimeRef.current = performance.now() - simPausedAtRef.current;
+    }
+  };
+
+  const handleRestartSim = () => {
+    if (simRafRef.current) {
+      cancelAnimationFrame(simRafRef.current);
+      simRafRef.current = null;
+    }
+    simPausedAtRef.current = 0;
+    setSimProgress(0);
+    updateSimAtProgress(0);
+    if (!prefersReducedMotion) {
+      setIsSimPlaying(true);
+      simStartTimeRef.current = performance.now();
+    } else {
+      setIsSimPlaying(false);
+    }
+  };
+
+  const handleCloseSim = () => {
+    if (simRafRef.current) {
+      cancelAnimationFrame(simRafRef.current);
+      simRafRef.current = null;
+    }
+    setIsSimulating(false);
+    setIsSimPlaying(false);
+    setSimCommuterPoint(null);
+  };
+
+  const handleSeekSim = (p: number) => {
+    simPausedAtRef.current = p * DURATION_MS;
+    if (isSimPlaying) {
+      simStartTimeRef.current = performance.now() - simPausedAtRef.current;
+    }
+    updateSimAtProgress(p);
+  };
+
+  // 60 fps simulation animation loop
+  useEffect(() => {
+    if (!isSimulating || !isSimPlaying) {
+      if (simRafRef.current) {
+        cancelAnimationFrame(simRafRef.current);
+        simRafRef.current = null;
+      }
+      return;
+    }
+
+    const tick = (now: number) => {
+      const elapsed = now - simStartTimeRef.current;
+      const p = Math.min(1, Math.max(0, elapsed / DURATION_MS));
+      updateSimAtProgress(p);
+
+      if (p >= 1) {
+        setIsSimPlaying(false);
+        simRafRef.current = null;
+      } else {
+        simRafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    simRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (simRafRef.current) {
+        cancelAnimationFrame(simRafRef.current);
+        simRafRef.current = null;
+      }
+    };
+  }, [isSimulating, isSimPlaying, activeRoute]);
+
   // Dedicated /styleguide route
   if (currentPath === '/styleguide') {
     return <Styleguide />;
   }
 
-  // Handle clicking a timeline leg
+  // Handle clicking a timeline leg (PRD §22.4)
   const handleSelectLeg = (idx: number, leg: Leg) => {
     setSelectedLegIdx(idx);
     if (mapRef.current) {
       mapRef.current.setRoute(activeRoute, idx, result?.routes);
 
-      // Fit bounds to the selected leg (PRD §10.4: 900 ms flyTo)
+      // Fit bounds to selected leg with padding clearing dock and bottom sheet (PRD §22.4)
       const lats = [leg.from.lat, leg.to.lat];
       const lngs = [leg.from.lng, leg.to.lng];
       const minLat = Math.min(...lats);
@@ -105,12 +317,24 @@ export const App: React.FC = () => {
       const minLng = Math.min(...lngs);
       const maxLng = Math.max(...lngs);
 
+      const isDesktop =
+        typeof window !== 'undefined' && window.innerWidth >= 1024;
+      const isTablet =
+        typeof window !== 'undefined' &&
+        window.innerWidth >= 640 &&
+        window.innerWidth < 1024;
+      const padding = isDesktop
+        ? { top: 96, bottom: 80, left: 420, right: 460 }
+        : isTablet
+          ? { top: 96, bottom: 80, left: 390, right: 60 }
+          : { top: 180, bottom: 350, left: 32, right: 32 };
+
       mapRef.current.flyToBounds(
         [
           [minLng, minLat],
           [maxLng, maxLat],
         ],
-        { padding: 120, duration: 900 },
+        { padding, duration: 900 },
       );
     }
   };
@@ -278,6 +502,8 @@ export const App: React.FC = () => {
           onMyLocationClick={requestCurrentLocation}
           onMapClick={handleMapClick}
           onMarkerDragEnd={handleMarkerDragEnd}
+          hoveredLegIndex={hoveredLegIdx}
+          simulatedCommuter={simCommuterPoint}
         />
       </ErrorBoundary>
 
@@ -324,6 +550,32 @@ export const App: React.FC = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 1D. Floating Leg Detail Card (PRD §22.4) */}
+      {selectedLegIdx !== undefined && activeRoute.legs[selectedLegIdx] && (
+        <LegDetailFloatingCard
+          leg={activeRoute.legs[selectedLegIdx]}
+          legIndex={selectedLegIdx}
+          totalLegs={activeRoute.legs.length}
+          onClose={() => setSelectedLegIdx(undefined)}
+        />
+      )}
+
+      {/* 1E. Live Commute Simulation HUD (PRD §22.4) */}
+      {isSimulating && (
+        <CommuteSimulatorHUD
+          isPlaying={isSimPlaying}
+          onTogglePlay={handleTogglePlaySim}
+          onRestart={handleRestartSim}
+          onClose={handleCloseSim}
+          progress={simProgress}
+          onSeek={handleSeekSim}
+          currentTime={simCurrentTime}
+          moneySpent={simMoneySpent}
+          currentMode={simCurrentMode}
+          isReducedMotion={prefersReducedMotion}
+        />
       )}
 
       {/* 1B. Map Safe Zone Overlay Layer (PRD §22.1a) */}
@@ -438,6 +690,9 @@ export const App: React.FC = () => {
               isMobileSheet={true}
               selectedLegIndex={selectedLegIdx}
               onSelectLeg={handleSelectLeg}
+              onHoverLeg={setHoveredLegIdx}
+              onStartSimulation={handleStartSimulation}
+              isSimulating={isSimulating}
             />
           </ErrorBoundary>
         </div>
@@ -466,6 +721,9 @@ export const App: React.FC = () => {
             <ResultsPanel
               selectedLegIndex={selectedLegIdx}
               onSelectLeg={handleSelectLeg}
+              onHoverLeg={setHoveredLegIdx}
+              onStartSimulation={handleStartSimulation}
+              isSimulating={isSimulating}
               className="max-h-[calc(100vh-420px)]"
             />
           </ErrorBoundary>
@@ -506,6 +764,9 @@ export const App: React.FC = () => {
               <ResultsPanel
                 selectedLegIndex={selectedLegIdx}
                 onSelectLeg={handleSelectLeg}
+                onHoverLeg={setHoveredLegIdx}
+                onStartSimulation={handleStartSimulation}
+                isSimulating={isSimulating}
                 className="max-h-[calc(100vh-32px)]"
               />
             </ErrorBoundary>
