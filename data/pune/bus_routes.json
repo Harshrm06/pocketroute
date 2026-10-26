@@ -53,7 +53,14 @@
           "lng": 73.8488,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 4, 8, 13, 18, 23]
     },
     {
       "routeNo": "24",
@@ -99,7 +106,14 @@
           "lng": 73.8744,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 5, 11, 15, 22]
     },
     {
       "routeNo": "103",
@@ -145,7 +159,14 @@
           "lng": 73.8125,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 375,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 18,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 6, 14, 21, 26]
     },
     {
       "routeNo": "149",
@@ -212,7 +233,14 @@
           "lng": 73.9392,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 20,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 7, 16, 26, 38, 46, 60, 67]
     },
     {
       "routeNo": "204",
@@ -265,7 +293,14 @@
           "lng": 73.7915,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 20,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 10, 20, 36, 46, 55]
     },
     {
       "routeNo": "BRT_1",
@@ -318,7 +353,14 @@
           "lng": 73.8587,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 6,
+      "offPeakHeadwayMin": 10,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 4, 7, 11, 14, 18]
     },
     {
       "routeNo": "111",
@@ -364,7 +406,14 @@
           "lng": 73.8744,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 12,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 3, 8, 12, 18]
     },
     {
       "routeNo": "115",
@@ -424,7 +473,14 @@
           "lng": 73.7112,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 370,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 8, 15, 22, 33, 41, 50]
     },
     {
       "routeNo": "174",
@@ -470,7 +526,14 @@
           "lng": 73.8744,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 6, 11, 15, 23]
     },
     {
       "routeNo": "208",
@@ -509,7 +572,14 @@
           "lng": 73.9392,
           "segmentDistanceKm": 0
         }
-      ]
+      ],
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stopOffsetMin": [0, 5, 12, 20]
     }
   ]
 }

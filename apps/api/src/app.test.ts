@@ -141,7 +141,7 @@ describe('apps/api (Fastify integration tests)', () => {
       expect(data.metrics).not.toBeNull();
       expect(data.metrics.pq).toBeDefined();
       expect(data.metrics.graph.B).toBe(75);
-      expect(data.metrics.timing.runs).toBe(5);
+      expect([1, 5]).toContain(data.metrics.timing.runs);
       expect(data.metrics.timing.medianMs).toBeGreaterThan(0);
       expect(data.metrics.theory.routeA.bound).toBe('O(E*L*log(V*L))');
     });

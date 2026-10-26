@@ -50,7 +50,8 @@ export class PlacesSearchService {
     }
 
     // 2. Search local seed
-    const scored: Array<{ place: Place; score: number }> = [];
+    type PlaceWithCoords = Place & { lat: number; lng: number };
+    const scored: Array<{ place: PlaceWithCoords; score: number }> = [];
     for (const p of this.places) {
       const nameLower = p.name.toLowerCase();
       let matchScore = 0;
@@ -74,8 +75,11 @@ export class PlacesSearchService {
         }
       }
 
-      if (matchScore > 0) {
-        scored.push({ place: p, score: matchScore });
+      if (matchScore > 0 && p.lat !== null && p.lng !== null) {
+        scored.push({
+          place: p as PlaceWithCoords,
+          score: matchScore,
+        });
       }
     }
 

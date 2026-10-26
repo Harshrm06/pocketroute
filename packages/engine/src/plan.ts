@@ -18,6 +18,7 @@ import type {
 import { MAX_WALK_LEG_M } from '@pocketroute/shared';
 import { parseHHmm, timeOfDayMinutes } from './timing/index.js';
 import { bezierEstimate } from './geometry/index.js';
+import { checkDailyPassTip } from './pricing/index.js';
 import type {
   NetworkData,
   QueryGraphOptions,
@@ -77,6 +78,8 @@ export interface PlanResult {
   };
   comparison: RouteComparison | null;
   infeasible: InfeasibleResult | null;
+  dailyPassTip?: string | null;
+  attachmentRadiusExpanded?: boolean;
   metrics: ProfilerMetrics;
   solverTimings?: {
     routeA: SolverTiming;
@@ -288,6 +291,10 @@ function formatRoute(
   });
 
   const totalDistanceKm = legs.reduce((acc, l) => acc + l.distanceKm, 0);
+  const cumulativeBusFare = legs
+    .filter((l) => l.mode === 'BUS')
+    .reduce((sum, l) => sum + l.fareINR, 0);
+  const dailyPassTip = checkDailyPassTip(cumulativeBusFare);
 
   return {
     feasible: true,
@@ -297,6 +304,7 @@ function formatRoute(
     departureTime: result.departureTime,
     totalDistanceKm,
     legs,
+    dailyPassTip,
   };
 }
 
@@ -508,6 +516,11 @@ export function planRoutes(
     },
     comparison,
     infeasible,
+    dailyPassTip:
+      smart?.dailyPassTip ??
+      fastest.dailyPassTip ??
+      cheapest.dailyPassTip ??
+      null,
     metrics,
     solverTimings: {
       routeA: {

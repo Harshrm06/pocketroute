@@ -21,5 +21,24 @@ export function busFareINR(distanceKm: number, fareTable?: FareTables): number {
   }
 
   const lastSlab = slabs[slabs.length - 1];
-  return lastSlab ? lastSlab.fareINR : 30;
+  return lastSlab ? lastSlab.fareINR : 40;
+}
+
+/**
+ * Alias for busFareINR matching PRD v1.2.0 naming.
+ */
+export const computeBusFare = busFareINR;
+
+/**
+ * Checks whether cumulative bus fare exceeds the daily pass threshold (PRD §23, v1.2.0).
+ * Threshold = 70 INR. At 70 -> null; at >70 -> Tip message.
+ */
+export function checkDailyPassTip(
+  cumulativeBusFareINR: number,
+  thresholdINR = 70,
+): string | null {
+  if (cumulativeBusFareINR > thresholdINR) {
+    return 'Tip: Buy ₹70 PMPML Daily Pass (price unverified)';
+  }
+  return null;
 }

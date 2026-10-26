@@ -1,6 +1,7 @@
 {
   "effectiveFrom": "2026-10-01",
-  "source": "Pune Metro and PMPML published fare tables, PRD Sections 6.2 - 6.5",
+  "source": "Supplied brief, not yet verified against PMPML fare notice",
+  "verified": false,
   "metro": {
     "slabs": [
       { "maxDistanceKm": 2, "fareINR": 10 },
@@ -13,12 +14,13 @@
   },
   "bus": {
     "slabs": [
-      { "maxDistanceKm": 3, "fareINR": 5 },
-      { "maxDistanceKm": 6, "fareINR": 10 },
-      { "maxDistanceKm": 10, "fareINR": 15 },
-      { "maxDistanceKm": 15, "fareINR": 20 },
-      { "maxDistanceKm": 22, "fareINR": 25 },
-      { "maxDistanceKm": null, "fareINR": 30 }
+      { "maxDistanceKm": 3, "fareINR": 10 },
+      { "maxDistanceKm": 6, "fareINR": 15 },
+      { "maxDistanceKm": 10, "fareINR": 20 },
+      { "maxDistanceKm": 15, "fareINR": 25 },
+      { "maxDistanceKm": 22, "fareINR": 30 },
+      { "maxDistanceKm": 30, "fareINR": 35 },
+      { "maxDistanceKm": null, "fareINR": 40 }
     ]
   },
   "auto": {

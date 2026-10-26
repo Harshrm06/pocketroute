@@ -299,6 +299,22 @@ function run(): void {
           }
         }
       }
+
+      // Check stopOffsetMin (v1.2.0 PRD §23)
+      if (route.stopOffsetMin) {
+        if (route.stopOffsetMin.length !== stopCount) {
+          errors.push(
+            `Bus route ${route.routeNo} stopOffsetMin length (${route.stopOffsetMin.length}) does not match stops count (${stopCount}).`,
+          );
+        }
+        for (let j = 1; j < route.stopOffsetMin.length; j++) {
+          if (route.stopOffsetMin[j]! < route.stopOffsetMin[j - 1]!) {
+            errors.push(
+              `Bus route ${route.routeNo} stopOffsetMin is not non-decreasing at index ${j} (${route.stopOffsetMin[j]} < ${route.stopOffsetMin[j - 1]}).`,
+            );
+          }
+        }
+      }
     }
 
     console.log(

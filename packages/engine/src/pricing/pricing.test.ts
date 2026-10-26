@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   autoFareINR,
   busFareINR,
+  computeBusFare,
+  checkDailyPassTip,
   cabFareINR,
   fareTablesSchema,
   getDefaultFares,
@@ -129,40 +131,57 @@ describe('Pricing Module', () => {
     });
   });
 
-  describe('busFareINR (PRD Sections 6.3 and 17.1)', () => {
-    it('returns 5 for distance 0', () => {
-      expect(busFareINR(0)).toBe(5);
+  describe('busFareINR and computeBusFare (PRD v1.2.0, Sections 6.3 & 23)', () => {
+    it('returns 10 for distance 0 (any boarding costs at least ₹10)', () => {
+      expect(busFareINR(0)).toBe(10);
+      expect(computeBusFare(0)).toBe(10);
     });
 
-    it('tests boundary values: 2.0, 2.01, 4.0, 18.0, 18.01, 22.0, 22.01', () => {
-      // Slab 1: d <= 3 -> 5
-      expect(busFareINR(2.0)).toBe(5);
-      expect(busFareINR(2.01)).toBe(5);
-      expect(busFareINR(3.0)).toBe(5);
+    it('tests boundary values: 0, 3, 3.01, 6, 22, 22.01, 30, 30.01', () => {
+      // Slab 1: 0 < d <= 3 -> 10
+      expect(computeBusFare(0)).toBe(10);
+      expect(computeBusFare(2.0)).toBe(10);
+      expect(computeBusFare(3.0)).toBe(10);
 
-      // Slab 2: 3 < d <= 6 -> 10
-      expect(busFareINR(3.01)).toBe(10);
-      expect(busFareINR(4.0)).toBe(10);
-      expect(busFareINR(6.0)).toBe(10);
+      // Slab 2: 3 < d <= 6 -> 15
+      expect(computeBusFare(3.01)).toBe(15);
+      expect(computeBusFare(4.0)).toBe(15);
+      expect(computeBusFare(6.0)).toBe(15);
 
-      // Slab 3: 6 < d <= 10 -> 15
-      expect(busFareINR(10.0)).toBe(15);
+      // Slab 3: 6 < d <= 10 -> 20
+      expect(computeBusFare(6.01)).toBe(20);
+      expect(computeBusFare(10.0)).toBe(20);
 
-      // Slab 4: 10 < d <= 15 -> 20
-      expect(busFareINR(15.0)).toBe(20);
+      // Slab 4: 10 < d <= 15 -> 25
+      expect(computeBusFare(10.01)).toBe(25);
+      expect(computeBusFare(15.0)).toBe(25);
 
-      // Slab 5: 15 < d <= 22 -> 25
-      expect(busFareINR(18.0)).toBe(25);
-      expect(busFareINR(18.01)).toBe(25);
-      expect(busFareINR(22.0)).toBe(25);
+      // Slab 5: 15 < d <= 22 -> 30
+      expect(computeBusFare(15.01)).toBe(30);
+      expect(computeBusFare(22.0)).toBe(30);
 
-      // Slab 6: d > 22 -> 30
-      expect(busFareINR(22.01)).toBe(30);
-      expect(busFareINR(30.0)).toBe(30);
+      // Slab 6: 22 < d <= 30 -> 35
+      expect(computeBusFare(22.01)).toBe(35);
+      expect(computeBusFare(30.0)).toBe(35);
+
+      // Slab 7: d > 30 -> 40
+      expect(computeBusFare(30.01)).toBe(40);
+      expect(computeBusFare(35.0)).toBe(40);
     });
 
     it('throws on negative distance', () => {
-      expect(() => busFareINR(-1)).toThrow();
+      expect(() => computeBusFare(-1)).toThrow();
+    });
+
+    it('daily tip threshold at 70 and 70.01', () => {
+      expect(checkDailyPassTip(70)).toBeNull();
+      expect(checkDailyPassTip(60)).toBeNull();
+      expect(checkDailyPassTip(70.01)).toBe(
+        'Tip: Buy ₹70 PMPML Daily Pass (price unverified)',
+      );
+      expect(checkDailyPassTip(85)).toBe(
+        'Tip: Buy ₹70 PMPML Daily Pass (price unverified)',
+      );
     });
   });
 

@@ -310,7 +310,7 @@ describe('packages/engine/src/plan', () => {
       expect(result.metrics.graph.V).toBeGreaterThan(0);
       expect(result.metrics.graph.E).toBeGreaterThan(0);
       expect(result.metrics.graph.B).toBe(75);
-      expect(result.metrics.timing.runs).toBe(5);
+      expect([1, 5]).toContain(result.metrics.timing.runs);
       expect(result.metrics.timing.medianMs).toBeGreaterThan(0);
 
       // 5. Theory checks

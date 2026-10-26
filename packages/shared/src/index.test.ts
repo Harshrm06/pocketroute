@@ -245,8 +245,29 @@ describe('packages/shared schema & type tests', () => {
       instruction: 'Board Purple Line toward PCMC at Swargate.',
     };
 
-    it('validates a correct Leg', () => {
+    it('validates a correct Leg without v1.2.0 fields', () => {
       expect(legSchema.safeParse(validLeg).success).toBe(true);
+    });
+
+    it('validates a Leg with optional v1.2.0 schedule & bus fields', () => {
+      const legWithV120 = {
+        ...validLeg,
+        routeNumbers: ['140', '23'],
+        routeName: 'Upper Depot to Pune Station',
+        headsign: 'Pune Station',
+        boardingStop: 'Bibwewadi',
+        alightingStop: 'Pune Railway Station',
+        intermediateStopsCount: 4,
+        intermediateStops: ['Market Yard', 'Swargate'],
+        scheduledDeparture: '17:38',
+        scheduledArrival: '18:02',
+        waitMinutes: 4,
+        frequencyMinutes: 10,
+        nextDepartures: ['17:38', '17:48', '17:58'],
+        scheduleBasis: 'estimate' as const,
+      };
+      const result = legSchema.safeParse(legWithV120);
+      expect(result.success).toBe(true);
     });
 
     it('validates a Route containing legs', () => {

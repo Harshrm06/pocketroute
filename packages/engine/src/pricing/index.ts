@@ -6,7 +6,7 @@ export {
   setDefaultFares,
 } from './loader.js';
 export { metroFareINR } from './metro.js';
-export { busFareINR } from './bus.js';
+export { busFareINR, computeBusFare, checkDailyPassTip } from './bus.js';
 export { autoFareINR } from './auto.js';
 export { cabFareINR } from './cab.js';
 export { walkFareINR } from './walk.js';

@@ -158,8 +158,23 @@ export const legSchema = z.object({
   geometry: geoJsonLineStringSchema,
   geometryQuality: geometryQualitySchema,
   instruction: z.string(),
+  // Bus and Metro schedule & route metadata (v1.2.0, PRD §23)
+  routeNumbers: z.array(z.string()).optional(),
+  routeName: z.string().optional(),
+  headsign: z.string().optional(),
+  boardingStop: z.string().optional(),
+  alightingStop: z.string().optional(),
+  intermediateStopsCount: z.number().int().nonnegative().optional(),
+  intermediateStops: z.array(z.string()).optional(),
+  scheduledDeparture: z.string().optional(),
+  scheduledArrival: z.string().optional(),
+  waitMinutes: z.number().nonnegative().optional(),
+  frequencyMinutes: z.number().nonnegative().optional(),
+  nextDepartures: z.array(z.string()).optional(),
+  scheduleBasis: z.literal('estimate').optional(),
 });
 export type Leg = z.infer<typeof legSchema>;
+export type RouteLeg = Leg;
 
 /**
  * Route schema matching PRD Section 9.1.
@@ -172,6 +187,8 @@ export const routeSchema = z.object({
   legs: z.array(legSchema),
   departureTime: z.string().optional(),
   totalDistanceKm: z.number().nonnegative().optional(),
+  dailyPassTip: z.string().nullable().optional(),
+  attachmentRadiusExpanded: z.boolean().optional(),
 });
 export type Route = z.infer<typeof routeSchema>;
 
@@ -271,6 +288,8 @@ export const planResponseSchema = z.object({
     .union([profilerMetricsSchema, z.record(z.string(), z.unknown())])
     .nullable()
     .optional(),
+  dailyPassTip: z.string().nullable().optional(),
+  attachmentRadiusExpanded: z.boolean().optional(),
 });
 export type PlanResponse = z.infer<typeof planResponseSchema>;
 
@@ -308,37 +327,40 @@ export type FareSlab = z.infer<typeof fareSlabSchema>;
 /**
  * Schema for data/pune/fares.json matching PRD Section 5 & 6.
  */
-export const fareTablesSchema = z.object({
-  effectiveFrom: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD date'),
-  source: z.string().optional(),
-  metro: z.object({
-    slabs: z.array(fareSlabSchema),
-  }),
-  bus: z.object({
-    slabs: z.array(fareSlabSchema),
-  }),
-  auto: z.object({
-    baseFareINR: z.number().nonnegative(),
-    baseDistanceKm: z.number().nonnegative(),
-    perKmRateINR: z.number().nonnegative(),
-    nightSurchargeMultiplier: z.number().positive(),
-    nightWindow: z.object({
-      startHour: z.number().int().min(0).max(23),
-      endHour: z.number().int().min(0).max(24),
+export const fareTablesSchema = z
+  .object({
+    effectiveFrom: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD date'),
+    source: z.string().optional(),
+    verified: z.boolean().optional(),
+    metro: z.object({
+      slabs: z.array(fareSlabSchema),
     }),
-  }),
-  cab: z.object({
-    baseFareINR: z.number().nonnegative(),
-    perKmRateINR: z.number().nonnegative(),
-    perMinuteRateINR: z.number().nonnegative(),
-    surgeMultiplier: z.number().positive(),
-  }),
-  walk: z.object({
-    fareINR: z.literal(0),
-  }),
-});
+    bus: z.object({
+      slabs: z.array(fareSlabSchema),
+    }),
+    auto: z.object({
+      baseFareINR: z.number().nonnegative(),
+      baseDistanceKm: z.number().nonnegative(),
+      perKmRateINR: z.number().nonnegative(),
+      nightSurchargeMultiplier: z.number().positive(),
+      nightWindow: z.object({
+        startHour: z.number().int().min(0).max(23),
+        endHour: z.number().int().min(0).max(24),
+      }),
+    }),
+    cab: z.object({
+      baseFareINR: z.number().nonnegative(),
+      perKmRateINR: z.number().nonnegative(),
+      perMinuteRateINR: z.number().nonnegative(),
+      surgeMultiplier: z.number().positive(),
+    }),
+    walk: z.object({
+      fareINR: z.literal(0),
+    }),
+  })
+  .passthrough();
 export type FareTables = z.infer<typeof fareTablesSchema>;
 
 /**
@@ -383,23 +405,34 @@ export const busStopSchema = z.object({
 });
 export type BusStop = z.infer<typeof busStopSchema>;
 
-export const busRouteSchema = z.object({
-  routeNo: z.string().min(1),
-  label: z.string().min(1),
-  firstDeparture: z.number().int().min(0).max(1440),
-  peakHeadway: z.number().positive(),
-  offPeakHeadway: z.number().positive(),
-  verified: z.boolean(),
-  notes: z.string().optional(),
-  stops: z.array(busStopSchema).min(2),
-});
+export const busRouteSchema = z
+  .object({
+    routeNo: z.string().min(1),
+    label: z.string().min(1),
+    firstDeparture: z.number().int().min(0).max(1440),
+    peakHeadway: z.number().positive(),
+    offPeakHeadway: z.number().positive(),
+    verified: z.boolean(),
+    notes: z.string().optional(),
+    stops: z.array(busStopSchema).min(2),
+    firstBusMin: z.number().int().min(0).max(1440).optional(),
+    lastBusMin: z.number().int().min(0).max(1440).optional(),
+    peakHeadwayMin: z.number().positive().optional(),
+    offPeakHeadwayMin: z.number().positive().optional(),
+    nightHeadwayMin: z.number().positive().optional(),
+    stopOffsetMin: z.array(z.number().nonnegative()).optional(),
+    scheduleSource: z.string().optional(),
+  })
+  .passthrough();
 export type BusRoute = z.infer<typeof busRouteSchema>;
 
-export const busRoutesDataSchema = z.object({
-  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  source: z.string().optional(),
-  routes: z.array(busRouteSchema).min(8).max(12),
-});
+export const busRoutesDataSchema = z
+  .object({
+    effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    source: z.string().optional(),
+    routes: z.array(busRouteSchema).min(2),
+  })
+  .passthrough();
 export type BusRoutesData = z.infer<typeof busRoutesDataSchema>;
 
 /**
@@ -409,16 +442,26 @@ export const placeSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   aliases: z.array(z.string()),
-  lat: z.number().min(PUNE_BOUNDING_BOX.minLat).max(PUNE_BOUNDING_BOX.maxLat),
-  lng: z.number().min(PUNE_BOUNDING_BOX.minLng).max(PUNE_BOUNDING_BOX.maxLng),
+  lat: z
+    .number()
+    .min(PUNE_BOUNDING_BOX.minLat)
+    .max(PUNE_BOUNDING_BOX.maxLat)
+    .nullable(),
+  lng: z
+    .number()
+    .min(PUNE_BOUNDING_BOX.minLng)
+    .max(PUNE_BOUNDING_BOX.maxLng)
+    .nullable(),
   category: z.string().min(1),
+  verified: z.boolean().optional(),
+  notes: z.string().optional(),
 });
 export type Place = z.infer<typeof placeSchema>;
 
 export const placesDataSchema = z.object({
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   source: z.string().optional(),
-  places: z.array(placeSchema).min(100),
+  places: z.array(placeSchema).min(50),
 });
 export type PlacesData = z.infer<typeof placesDataSchema>;
 
