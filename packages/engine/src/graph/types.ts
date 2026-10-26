@@ -50,6 +50,28 @@ export interface EdgeMeta {
   geometryRef?: string;
   /** Quality flag for geometry. */
   geometryQuality: GeometryQuality;
+  /** Route numbers serving this leg (e.g. ["140", "23"]). */
+  routeNumbers?: string[];
+  /** Human readable route name / label. */
+  routeName?: string;
+  /** Final destination / terminus stop name. */
+  headsign?: string;
+  /** Names of stops between boarding and alighting. */
+  intermediateStops?: string[];
+  /** Service start time in minutes from midnight. */
+  firstBusMin?: number;
+  /** Service end time in minutes from midnight. */
+  lastBusMin?: number;
+  /** Peak headway frequency in minutes. */
+  peakHeadwayMin?: number;
+  /** Off-peak headway frequency in minutes. */
+  offPeakHeadwayMin?: number;
+  /** Night headway frequency in minutes. */
+  nightHeadwayMin?: number;
+  /** Cumulative offset minutes to each stop on the route. */
+  stopOffsetMin?: number[];
+  /** Data provenance note for schedules. */
+  scheduleSource?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +138,8 @@ export interface StateGraph {
   edgeCount: number;
   /** Total number of line identifiers. */
   lineCount: number;
+  /** Whether origin or destination candidate stop search expanded from 3km to 5km. */
+  attachmentRadiusExpanded?: boolean;
 }
 
 /**
@@ -172,6 +196,7 @@ export interface BusStop {
 
 export interface BusRoute {
   routeNo: string;
+  routeNumbers?: string[];
   label: string;
   firstDeparture: number;
   peakHeadway: number;
@@ -179,6 +204,13 @@ export interface BusRoute {
   verified?: boolean;
   notes?: string;
   stops: BusStop[];
+  firstBusMin?: number;
+  lastBusMin?: number;
+  peakHeadwayMin?: number;
+  offPeakHeadwayMin?: number;
+  nightHeadwayMin?: number;
+  stopOffsetMin?: number[];
+  scheduleSource?: string;
 }
 
 export interface BusRoutesData {

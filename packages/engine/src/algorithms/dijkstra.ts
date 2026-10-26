@@ -29,6 +29,8 @@ export interface DijkstraLeg {
   stops: number;
   geometryQuality?: GeometryQuality;
   geometryRef?: string;
+  edge?: Edge;
+  meta?: import('../graph/index.js').EdgeMeta;
 }
 
 export interface RouteResult {
@@ -107,6 +109,8 @@ function reconstructPath(
       stops: edge.meta.stops,
       geometryQuality: edge.meta.geometryQuality,
       geometryRef: edge.meta.geometryRef,
+      edge,
+      meta: edge.meta,
     });
 
     currState = info.parentState;

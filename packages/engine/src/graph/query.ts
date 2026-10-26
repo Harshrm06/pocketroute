@@ -50,7 +50,7 @@ interface StopWithDistance {
  * Finds transit stops near a given point, sorted by distance.
  * Implements PRD §7.7 candidate pruning.
  */
-function findNearbyStops(
+export function findNearbyStops(
   point: LatLng,
   allStops: TransitStop[],
   maxWalkM: number,
@@ -94,37 +94,43 @@ function findNearbyStops(
 }
 
 /**
- * K-nearest stops within a radius (for auto/cab feeder edges).
+ * Finds nearest real transit stops to an endpoint (origin or destination).
+ * PRD §23.2:
+ * - Searches within 3.0 km by haversine distance, up to 5 stops.
+ * - If none are within 3.0 km, expands once to 5.0 km, up to 5 stops, and sets radiusExpanded = true.
  */
-function kNearestInRadius(
+export function findAttachedStops(
   point: LatLng,
   allStops: TransitStop[],
-  radiusKm: number,
-  k: number,
-): StopWithDistance[] {
-  const withDist: StopWithDistance[] = [];
-
+): { stops: StopWithDistance[]; radiusExpanded: boolean } {
+  const uniqueStops = new Map<string, TransitStop>();
   for (const stop of allStops) {
-    const distKm = haversineKm(point, { lat: stop.lat, lng: stop.lng });
-    if (distKm <= radiusKm) {
-      withDist.push({ stop, distKm });
+    if (!uniqueStops.has(stop.nodeId)) {
+      uniqueStops.set(stop.nodeId, stop);
     }
+  }
+
+  const withDist: StopWithDistance[] = [];
+  for (const stop of uniqueStops.values()) {
+    const distKm = haversineKm(point, { lat: stop.lat, lng: stop.lng });
+    withDist.push({ stop, distKm });
   }
 
   withDist.sort((a, b) => a.distKm - b.distKm);
 
-  // Deduplicate by nodeId and take k
-  const result: StopWithDistance[] = [];
-  const seen = new Set<string>();
-  for (const sd of withDist) {
-    if (result.length >= k) break;
-    if (!seen.has(sd.stop.nodeId)) {
-      result.push(sd);
-      seen.add(sd.stop.nodeId);
-    }
+  const within3km = withDist.filter((s) => s.distKm <= 3.0);
+  if (within3km.length > 0) {
+    return {
+      stops: within3km.slice(0, 5),
+      radiusExpanded: false,
+    };
   }
 
-  return result;
+  const within5km = withDist.filter((s) => s.distKm <= 5.0);
+  return {
+    stops: within5km.slice(0, 5),
+    radiusExpanded: true,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -296,6 +302,9 @@ export function buildQueryGraph(
   const feederK = options.feederK ?? DEFAULT_FEEDER_K;
   const maxCandidates =
     options.maxCandidateStops ?? DEFAULT_MAX_CANDIDATE_STOPS;
+  void feederRadiusKm;
+  void feederK;
+  void maxCandidates;
 
   // Clone adjacency lists from static graph
   const nodes = new Map(staticResult.graph.nodes);
@@ -350,34 +359,26 @@ export function buildQueryGraph(
     lines: allLines,
   });
 
-  // ---- Find candidate stops near origin and destination ----
-  const originCandidates = findNearbyStops(
-    origin,
-    staticResult.allStops,
-    maxWalkM,
-    maxCandidates,
-  );
-  const destCandidates = findNearbyStops(
-    destination,
-    staticResult.allStops,
-    maxWalkM,
-    maxCandidates,
-  );
+  // ---- Dynamic Stop Attachment (PRD §23.2) ----
+  const originAttachment = findAttachedStops(origin, staticResult.allStops);
+  const destAttachment = findAttachedStops(destination, staticResult.allStops);
+  const attachmentRadiusExpanded =
+    originAttachment.radiusExpanded || destAttachment.radiusExpanded;
 
   // Build a set of all candidate node IDs for transfer edges
   const candidateNodeIds = new Set<string>();
-  for (const sd of originCandidates) candidateNodeIds.add(sd.stop.nodeId);
-  for (const sd of destCandidates) candidateNodeIds.add(sd.stop.nodeId);
+  for (const sd of originAttachment.stops) candidateNodeIds.add(sd.stop.nodeId);
+  for (const sd of destAttachment.stops) candidateNodeIds.add(sd.stop.nodeId);
 
   // ---- O → stop: walk access edges ----
-  for (const { stop, distKm } of originCandidates) {
+  for (const { stop, distKm } of originAttachment.stops) {
     if (distKm <= maxWalkKm) {
       addEdge(makeWalkEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE'));
     }
   }
 
   // ---- stop → D: walk egress edges ----
-  for (const { stop, distKm } of destCandidates) {
+  for (const { stop, distKm } of destAttachment.stops) {
     if (distKm <= maxWalkKm) {
       addEdge(makeWalkEdge(stop.nodeId, DEST_NODE_ID, distKm, 'WALK'));
     }
@@ -391,13 +392,7 @@ export function buildQueryGraph(
 
   // ---- O → stop: auto/cab feeder edges ----
   if (options.includeAuto) {
-    const autoStops = kNearestInRadius(
-      origin,
-      staticResult.allStops,
-      feederRadiusKm,
-      feederK,
-    );
-    for (const { stop, distKm } of autoStops) {
+    for (const { stop, distKm } of originAttachment.stops) {
       addEdge(
         makeAutoEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE', localHour),
       );
@@ -405,26 +400,14 @@ export function buildQueryGraph(
   }
 
   if (options.includeCab) {
-    const cabStops = kNearestInRadius(
-      origin,
-      staticResult.allStops,
-      feederRadiusKm,
-      feederK,
-    );
-    for (const { stop, distKm } of cabStops) {
+    for (const { stop, distKm } of originAttachment.stops) {
       addEdge(makeCabEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE'));
     }
   }
 
   // ---- stop → D: auto/cab egress edges ----
   if (options.includeAuto) {
-    const autoStops = kNearestInRadius(
-      destination,
-      staticResult.allStops,
-      feederRadiusKm,
-      feederK,
-    );
-    for (const { stop, distKm } of autoStops) {
+    for (const { stop, distKm } of destAttachment.stops) {
       addEdge(
         makeAutoEdge(stop.nodeId, DEST_NODE_ID, distKm, 'AUTO', localHour),
       );
@@ -432,14 +415,75 @@ export function buildQueryGraph(
   }
 
   if (options.includeCab) {
-    const cabStops = kNearestInRadius(
-      destination,
-      staticResult.allStops,
-      feederRadiusKm,
-      feederK,
-    );
-    for (const { stop, distKm } of cabStops) {
+    for (const { stop, distKm } of destAttachment.stops) {
       addEdge(makeCabEdge(stop.nodeId, DEST_NODE_ID, distKm, 'CAB'));
+    }
+  }
+
+  // ---- Major Hubs Connection (PRD §23.2) ----
+  const MAJOR_HUB_IDS = new Set([
+    'b_swargate',
+    'b_pune_station',
+    'b_shivajinagar',
+    'b_deccan',
+    'b_hadapsar',
+    'b_kothrud_depot',
+    'b_katraj',
+    'b_pcmc',
+    'b_upper_depot',
+    'b_yerwada',
+    'b_market_yard',
+    'purple_civil_court',
+    'aqua_civil_court',
+    'purple_swargate',
+    'purple_pcmc',
+    'aqua_pune_railway_station',
+    'aqua_deccan_gymkhana',
+  ]);
+
+  const uniqueHubs = new Map<string, TransitStop>();
+  for (const s of staticResult.allStops) {
+    if (
+      MAJOR_HUB_IDS.has(s.nodeId) ||
+      s.name.toLowerCase().includes('depot') ||
+      s.name.toLowerCase().includes('station') ||
+      s.name.toLowerCase().includes('swargate') ||
+      s.name.toLowerCase().includes('gadital')
+    ) {
+      if (!uniqueHubs.has(s.nodeId)) uniqueHubs.set(s.nodeId, s);
+    }
+  }
+
+  for (const hub of uniqueHubs.values()) {
+    candidateNodeIds.add(hub.nodeId);
+    const originDistKm = haversineKm(origin, { lat: hub.lat, lng: hub.lng });
+    if (originDistKm <= 10.0) {
+      if (options.includeAuto) {
+        addEdge(
+          makeAutoEdge(
+            ORIGIN_NODE_ID,
+            hub.nodeId,
+            originDistKm,
+            'NONE',
+            localHour,
+          ),
+        );
+      }
+      if (options.includeCab) {
+        addEdge(makeCabEdge(ORIGIN_NODE_ID, hub.nodeId, originDistKm, 'NONE'));
+      }
+    }
+
+    const destDistKm = haversineKm({ lat: hub.lat, lng: hub.lng }, destination);
+    if (destDistKm <= 10.0) {
+      if (options.includeAuto) {
+        addEdge(
+          makeAutoEdge(hub.nodeId, DEST_NODE_ID, destDistKm, 'AUTO', localHour),
+        );
+      }
+      if (options.includeCab) {
+        addEdge(makeCabEdge(hub.nodeId, DEST_NODE_ID, destDistKm, 'CAB'));
+      }
     }
   }
 
@@ -491,36 +535,13 @@ export function buildQueryGraph(
     }
   }
 
-  // ---- Transfer edges: auto/cab between stops ----
-  if (options.includeAuto || options.includeCab) {
-    for (const sd of candidateStopsArr) {
-      const nearby = kNearestInRadius(
-        { lat: sd.lat, lng: sd.lng },
-        candidateStopsArr
-          .filter((s) => s.nodeId !== sd.nodeId)
-          .map((s) => ({
-            ...s,
-          })),
-        feederRadiusKm,
-        feederK,
-      );
-      for (const { stop: target, distKm } of nearby) {
-        if (options.includeAuto) {
-          addEdge(makeAutoEdge(sd.nodeId, target.nodeId, distKm, 'AUTO'));
-        }
-        if (options.includeCab) {
-          addEdge(makeCabEdge(sd.nodeId, target.nodeId, distKm, 'CAB'));
-        }
-      }
-    }
-  }
-
   return {
     nodes,
     adj,
     nodeAdj,
     edgeCount,
     lineCount: staticResult.graph.lineCount,
+    attachmentRadiusExpanded,
   };
 }
 

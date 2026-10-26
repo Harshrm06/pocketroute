@@ -230,6 +230,17 @@ function buildBusMacroRides(route: BusRoute): {
           stops: stopsBetween,
           geometryRef: `bus/${route.routeNo}`,
           geometryQuality: 'estimated',
+          routeNumbers: route.routeNumbers ?? [route.routeNo],
+          routeName: route.label,
+          headsign: routeStops[routeStops.length - 1]!.name,
+          intermediateStops: routeStops.slice(i + 1, k).map((s) => s.name),
+          firstBusMin: route.firstBusMin ?? route.firstDeparture,
+          lastBusMin: route.lastBusMin ?? 1380,
+          peakHeadwayMin: route.peakHeadwayMin ?? route.peakHeadway,
+          offPeakHeadwayMin: route.offPeakHeadwayMin ?? route.offPeakHeadway,
+          nightHeadwayMin: route.nightHeadwayMin ?? 30,
+          stopOffsetMin: route.stopOffsetMin,
+          scheduleSource: route.scheduleSource,
         },
       });
     }

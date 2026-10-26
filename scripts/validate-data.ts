@@ -50,6 +50,7 @@ const busStopSchema = z.object({
 
 const busRouteSchema = z.object({
   routeNo: z.string().min(1),
+  routeNumbers: z.array(z.string()).optional(),
   label: z.string().min(1),
   firstDeparture: z.number().int().min(0).max(1440),
   peakHeadway: z.number().positive(),
@@ -57,12 +58,19 @@ const busRouteSchema = z.object({
   verified: z.boolean(),
   notes: z.string().optional(),
   stops: z.array(busStopSchema).min(2),
+  firstBusMin: z.number().int().min(0).max(1440).optional(),
+  lastBusMin: z.number().int().min(0).max(1440).optional(),
+  peakHeadwayMin: z.number().positive().optional(),
+  offPeakHeadwayMin: z.number().positive().optional(),
+  nightHeadwayMin: z.number().positive().optional(),
+  stopOffsetMin: z.array(z.number().nonnegative()).optional(),
+  scheduleSource: z.string().optional(),
 });
 
 const busRoutesDataSchema = z.object({
   effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   source: z.string().optional(),
-  routes: z.array(busRouteSchema).min(8).max(12),
+  routes: z.array(busRouteSchema).min(8).max(35),
 });
 
 const placeSchema = z.object({

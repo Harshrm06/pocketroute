@@ -408,6 +408,7 @@ export type BusStop = z.infer<typeof busStopSchema>;
 export const busRouteSchema = z
   .object({
     routeNo: z.string().min(1),
+    routeNumbers: z.array(z.string()).optional(),
     label: z.string().min(1),
     firstDeparture: z.number().int().min(0).max(1440),
     peakHeadway: z.number().positive(),

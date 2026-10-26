@@ -398,5 +398,149 @@ describe('packages/engine/src/plan', () => {
         }
       });
     });
+
+    describe('v1.2.0 Step 2: Southern corridor network and origin attachment', () => {
+      it('Bibwewadi → Pune Station returns a route whose bus legs are Bus 140 or Bus 23 with zero bus transfers', () => {
+        const bibwewadiCoord = {
+          lat: 18.4752,
+          lng: 73.8562,
+          label: 'Bibwewadi',
+        };
+        const puneStationCoord = {
+          lat: 18.5288,
+          lng: 73.8744,
+          label: 'Pune Railway Station',
+        };
+
+        const result = planRoutes(network, {
+          origin: bibwewadiCoord,
+          destination: puneStationCoord,
+          departureTime: '17:30',
+          budgetINR: 75,
+          options: {
+            includeAuto: false,
+            includeCab: false,
+          },
+        });
+
+        const route = result.routes.smart ?? result.routes.fastest;
+        expect(route).toBeDefined();
+        expect(route.feasible).toBe(true);
+
+        const busLegs = route.legs.filter((l) => l.mode === 'BUS');
+        if (busLegs.length === 0) {
+          throw new Error(
+            'Missing link: No bus leg returned for Bibwewadi → Pune Station',
+          );
+        }
+
+        // Must be single bus ride (0 bus transfers)
+        expect(busLegs.length).toBe(1);
+        const busLeg = busLegs[0]!;
+
+        const allowedLines = ['BUS_140', 'BUS_23'];
+        const hasAllowedLine = allowedLines.includes(busLeg.lineId);
+        const hasAllowedRouteNumbers = busLeg.routeNumbers?.some(
+          (rn) => rn === '140' || rn === '23',
+        );
+
+        if (!hasAllowedLine && !hasAllowedRouteNumbers) {
+          throw new Error(
+            `Missing link: Expected Bus 140 or Bus 23 on direct corridor, got ${busLeg.lineId}`,
+          );
+        }
+        expect(hasAllowedLine || hasAllowedRouteNumbers).toBe(true);
+      });
+
+      it('Kothrud → Viman Nagar returns a feasible route and avoids Padmawati BRT', () => {
+        const kothrudCoord = {
+          lat: 18.5028,
+          lng: 73.7942,
+          label: 'Kothrud Depot',
+        };
+        const vimanNagarCoord = {
+          lat: 18.5642,
+          lng: 73.9125,
+          label: 'Viman Nagar',
+        };
+
+        const result = planRoutes(network, {
+          origin: kothrudCoord,
+          destination: vimanNagarCoord,
+          departureTime: '10:00',
+          budgetINR: 100,
+        });
+
+        const route = result.routes.smart ?? result.routes.fastest;
+        expect(route.feasible).toBe(true);
+
+        // Assert feasible route avoids Padmawati BRT
+        const usesPadmavatiBrt = route.legs.some(
+          (l) =>
+            l.lineId === 'BUS_BRT_1' ||
+            l.from.name.includes('Padmavati BRT') ||
+            l.to.name.includes('Padmavati BRT'),
+        );
+        expect(usesPadmavatiBrt).toBe(false);
+      });
+
+      it('Baner → Shivajinagar returns a feasible route and avoids Padmawati BRT', () => {
+        const banerCoord = { lat: 18.559, lng: 73.7845, label: 'Baner' };
+        const shivajinagarCoord = {
+          lat: 18.5303,
+          lng: 73.8488,
+          label: 'Shivajinagar',
+        };
+
+        const result = planRoutes(network, {
+          origin: banerCoord,
+          destination: shivajinagarCoord,
+          departureTime: '10:00',
+          budgetINR: 100,
+        });
+
+        const route = result.routes.smart ?? result.routes.fastest;
+        expect(route.feasible).toBe(true);
+
+        const usesPadmavatiBrt = route.legs.some(
+          (l) =>
+            l.lineId === 'BUS_BRT_1' ||
+            l.from.name.includes('Padmavati BRT') ||
+            l.to.name.includes('Padmavati BRT'),
+        );
+        expect(usesPadmavatiBrt).toBe(false);
+      });
+
+      it('Hadapsar → Pune Station returns a feasible route and avoids Padmawati BRT', () => {
+        const hadapsarCoord = {
+          lat: 18.5024,
+          lng: 73.9392,
+          label: 'Hadapsar Gadital',
+        };
+        const puneStationCoord = {
+          lat: 18.5288,
+          lng: 73.8744,
+          label: 'Pune Railway Station',
+        };
+
+        const result = planRoutes(network, {
+          origin: hadapsarCoord,
+          destination: puneStationCoord,
+          departureTime: '10:00',
+          budgetINR: 100,
+        });
+
+        const route = result.routes.smart ?? result.routes.fastest;
+        expect(route.feasible).toBe(true);
+
+        const usesPadmavatiBrt = route.legs.some(
+          (l) =>
+            l.lineId === 'BUS_BRT_1' ||
+            l.from.name.includes('Padmavati BRT') ||
+            l.to.name.includes('Padmavati BRT'),
+        );
+        expect(usesPadmavatiBrt).toBe(false);
+      });
+    });
   });
 });

@@ -16,7 +16,7 @@ import type {
   StopPoint,
 } from '@pocketroute/shared';
 import { MAX_WALK_LEG_M } from '@pocketroute/shared';
-import { parseHHmm, timeOfDayMinutes } from './timing/index.js';
+import { formatHHmm24, parseHHmm, timeOfDayMinutes } from './timing/index.js';
 import { bezierEstimate } from './geometry/index.js';
 import { checkDailyPassTip } from './pricing/index.js';
 import type {
@@ -271,6 +271,47 @@ function formatRoute(
       { lat: toPoint.lat, lng: toPoint.lng },
     );
 
+    const legMeta = leg.meta;
+    const isBus = leg.mode === 'BUS';
+    const isMetro = leg.mode === 'METRO';
+
+    const routeNumbers = isBus
+      ? (legMeta?.routeNumbers ?? [leg.line.replace(/^BUS_/, '')])
+      : undefined;
+
+    const routeName = isBus ? legMeta?.routeName : undefined;
+    const headsign = isBus ? (legMeta?.headsign ?? toPoint.name) : undefined;
+    const boardingStop = isBus ? fromPoint.name : undefined;
+    const alightingStop = isBus ? toPoint.name : undefined;
+    const intermediateStopsCount = isBus
+      ? (legMeta?.stops ?? leg.stops ?? 0)
+      : undefined;
+    const intermediateStops = isBus
+      ? (legMeta?.intermediateStops ?? [])
+      : undefined;
+
+    const scheduledDeparture =
+      isBus || isMetro ? formatHHmm24(leg.departMinutes) : undefined;
+    const scheduledArrival =
+      isBus || isMetro ? formatHHmm24(leg.arriveMinutes) : undefined;
+    const waitMinutes = isBus || isMetro ? waitMin : undefined;
+    const frequencyMinutes = isBus
+      ? (legMeta?.peakHeadwayMin ?? 10)
+      : isMetro
+        ? 5
+        : undefined;
+
+    const nextDepartures =
+      (isBus || isMetro) && frequencyMinutes
+        ? [
+            formatHHmm24(leg.departMinutes),
+            formatHHmm24(leg.departMinutes + frequencyMinutes),
+            formatHHmm24(leg.departMinutes + 2 * frequencyMinutes),
+          ]
+        : undefined;
+
+    const scheduleBasis = isBus ? ('estimate' as const) : undefined;
+
     return {
       mode: leg.mode,
       lineId: leg.line,
@@ -287,6 +328,19 @@ function formatRoute(
       geometry,
       geometryQuality: leg.geometryQuality ?? 'estimated',
       instruction,
+      routeNumbers,
+      routeName,
+      headsign,
+      boardingStop,
+      alightingStop,
+      intermediateStopsCount,
+      intermediateStops,
+      scheduledDeparture,
+      scheduledArrival,
+      waitMinutes,
+      frequencyMinutes,
+      nextDepartures,
+      scheduleBasis,
     };
   });
 
@@ -305,6 +359,7 @@ function formatRoute(
     totalDistanceKm,
     legs,
     dailyPassTip,
+    attachmentRadiusExpanded: graph.attachmentRadiusExpanded,
   };
 }
 
@@ -521,6 +576,7 @@ export function planRoutes(
       fastest.dailyPassTip ??
       cheapest.dailyPassTip ??
       null,
+    attachmentRadiusExpanded: queryGraph.attachmentRadiusExpanded ?? false,
     metrics,
     solverTimings: {
       routeA: {

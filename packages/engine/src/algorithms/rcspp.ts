@@ -125,6 +125,8 @@ function reconstructRcsppPath(best: Label, t0: number): RouteResult {
       stops: edge.meta.stops,
       geometryQuality: edge.meta.geometryQuality as GeometryQuality,
       geometryRef: edge.meta.geometryRef,
+      edge,
+      meta: edge.meta,
     });
 
     curr = parent;

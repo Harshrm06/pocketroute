@@ -3,313 +3,1246 @@
   "source": "PMPML published corridor schedules (indicative draft for DAA MVP)",
   "routes": [
     {
-      "routeNo": "2",
-      "label": "Katraj to Shivajinagar",
+      "routeNo": "140",
+      "routeNumbers": ["140", "23"],
+      "label": "Upper Indira Nagar Depot to Pune Railway Station via Market Yard",
+      "firstDeparture": 360,
+      "peakHeadway": 8,
+      "offPeakHeadway": 12,
+      "verified": false,
+      "notes": "Southern corridor service; stops and timings pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 12,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 1.5
+        },
+        {
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
+          "segmentDistanceKm": 0.8
+        },
+        {
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b_market_yard",
+          "name": "Market Yard",
+          "lat": 18.4878,
+          "lng": 73.8575,
+          "segmentDistanceKm": 1.6
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 2.6
+        },
+        {
+          "id": "b_collector_kacheri",
+          "name": "Collector Kacheri",
+          "lat": 18.5245,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0.6
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 4, 7, 12, 18, 25, 28]
+    },
+    {
+      "routeNo": "23",
+      "routeNumbers": ["140", "23"],
+      "label": "Upper Indira Nagar Depot to Pune Railway Station Express",
       "firstDeparture": 360,
       "peakHeadway": 10,
       "offPeakHeadway": 15,
       "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "notes": "Southern corridor express skipping Market Yard; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
       "stops": [
         {
-          "id": "b2_katraj",
-          "name": "Katraj Bus Stand",
-          "lat": 18.4485,
-          "lng": 73.8587,
-          "segmentDistanceKm": 1.2
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 1.5
         },
         {
-          "id": "b2_bharati_vidyapeeth",
-          "name": "Bharati Vidyapeeth",
-          "lat": 18.4578,
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
+          "segmentDistanceKm": 0.8
+        },
+        {
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 2.9
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
           "lng": 73.8542,
-          "segmentDistanceKm": 1.4
+          "segmentDistanceKm": 2.6
         },
         {
-          "id": "b2_padmavati",
-          "name": "Padmavati",
-          "lat": 18.4712,
-          "lng": 73.8561,
-          "segmentDistanceKm": 1.8
+          "id": "b_collector_kacheri",
+          "name": "Collector Kacheri",
+          "lat": 18.5245,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0.6
         },
         {
-          "id": "b2_swargate",
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 4, 7, 16, 23, 26]
+    },
+    {
+      "routeNo": "140_R",
+      "routeNumbers": ["140", "23"],
+      "label": "Pune Railway Station to Upper Indira Nagar Depot via Market Yard",
+      "firstDeparture": 360,
+      "peakHeadway": 8,
+      "offPeakHeadway": 12,
+      "verified": false,
+      "notes": "Southern corridor return service; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 12,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0.6
+        },
+        {
+          "id": "b_collector_kacheri",
+          "name": "Collector Kacheri",
+          "lat": 18.5245,
+          "lng": 73.8721,
+          "segmentDistanceKm": 2.6
+        },
+        {
+          "id": "b_swargate",
           "name": "Swargate",
           "lat": 18.5015,
           "lng": 73.8542,
           "segmentDistanceKm": 1.6
         },
         {
-          "id": "b2_shaniwar_wada",
-          "name": "Shaniwar Wada",
-          "lat": 18.5195,
-          "lng": 73.8553,
+          "id": "b_market_yard",
+          "name": "Market Yard",
+          "lat": 18.4878,
+          "lng": 73.8575,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 0.8
+        },
+        {
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
           "segmentDistanceKm": 1.5
         },
         {
-          "id": "b2_shivajinagar",
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 3, 10, 16, 21, 24, 28]
+    },
+    {
+      "routeNo": "23_R",
+      "routeNumbers": ["140", "23"],
+      "label": "Pune Railway Station to Upper Indira Nagar Depot Express",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Southern corridor return express skipping Market Yard; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0.6
+        },
+        {
+          "id": "b_collector_kacheri",
+          "name": "Collector Kacheri",
+          "lat": 18.5245,
+          "lng": 73.8721,
+          "segmentDistanceKm": 2.6
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 2.9
+        },
+        {
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 0.8
+        },
+        {
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
+          "segmentDistanceKm": 1.5
+        },
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 3, 10, 19, 22, 26]
+    },
+    {
+      "routeNo": "13",
+      "routeNumbers": ["13"],
+      "label": "Upper Indira Nagar Depot to Shivajinagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Upper Depot to Shivajinagar via Bibwewadi; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 1.5
+        },
+        {
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
+          "segmentDistanceKm": 0.8
+        },
+        {
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 2.9
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b_shivajinagar",
           "name": "Shivajinagar Station",
           "lat": 18.5303,
           "lng": 73.8488,
           "segmentDistanceKm": 0
         }
       ],
-      "firstBusMin": 360,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 10,
-      "offPeakHeadwayMin": 15,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 4, 8, 13, 18, 23]
+      "stopOffsetMin": [0, 4, 7, 16, 26]
     },
     {
-      "routeNo": "24",
-      "label": "Katraj to Pune Station",
+      "routeNo": "13_R",
+      "routeNumbers": ["13"],
+      "label": "Shivajinagar to Upper Indira Nagar Depot",
       "firstDeparture": 360,
       "peakHeadway": 10,
       "offPeakHeadway": 15,
       "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
-      "stops": [
-        {
-          "id": "b24_katraj",
-          "name": "Katraj Bus Stand",
-          "lat": 18.4485,
-          "lng": 73.8587,
-          "segmentDistanceKm": 1.8
-        },
-        {
-          "id": "b24_balaji_nagar",
-          "name": "Balaji Nagar",
-          "lat": 18.4632,
-          "lng": 73.8555,
-          "segmentDistanceKm": 2.1
-        },
-        {
-          "id": "b24_swargate",
-          "name": "Swargate",
-          "lat": 18.5015,
-          "lng": 73.8542,
-          "segmentDistanceKm": 1.4
-        },
-        {
-          "id": "b24_seven_loves",
-          "name": "Seven Loves Chowk",
-          "lat": 18.5078,
-          "lng": 73.8682,
-          "segmentDistanceKm": 2.2
-        },
-        {
-          "id": "b24_pune_station",
-          "name": "Pune Railway Station",
-          "lat": 18.5288,
-          "lng": 73.8744,
-          "segmentDistanceKm": 0
-        }
-      ],
+      "notes": "Shivajinagar to Upper Depot return; pending PMPML verification",
       "firstBusMin": 360,
       "lastBusMin": 1380,
       "peakHeadwayMin": 10,
       "offPeakHeadwayMin": 15,
       "nightHeadwayMin": 30,
       "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 5, 11, 15, 22]
-    },
-    {
-      "routeNo": "103",
-      "label": "Katraj to Kothrud Stand",
-      "firstDeparture": 375,
-      "peakHeadway": 12,
-      "offPeakHeadway": 18,
-      "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
       "stops": [
         {
-          "id": "b103_katraj",
-          "name": "Katraj Bus Stand",
-          "lat": 18.4485,
-          "lng": 73.8587,
-          "segmentDistanceKm": 1.9
-        },
-        {
-          "id": "b103_dhankawadi",
-          "name": "Dhankawadi",
-          "lat": 18.4615,
-          "lng": 73.8512,
-          "segmentDistanceKm": 2.8
-        },
-        {
-          "id": "b103_vitthalwadi",
-          "name": "Vitthalwadi",
-          "lat": 18.4842,
-          "lng": 73.8378,
-          "segmentDistanceKm": 2.3
-        },
-        {
-          "id": "b103_karve_nagar",
-          "name": "Karve Nagar",
-          "lat": 18.4912,
-          "lng": 73.8182,
-          "segmentDistanceKm": 1.7
-        },
-        {
-          "id": "b103_kothrud_stand",
-          "name": "Kothrud Stand",
-          "lat": 18.5042,
-          "lng": 73.8125,
-          "segmentDistanceKm": 0
-        }
-      ],
-      "firstBusMin": 375,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 12,
-      "offPeakHeadwayMin": 18,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 6, 14, 21, 26]
-    },
-    {
-      "routeNo": "149",
-      "label": "Nigdi to Hadapsar",
-      "firstDeparture": 360,
-      "peakHeadway": 12,
-      "offPeakHeadway": 20,
-      "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
-      "stops": [
-        {
-          "id": "b149_nigdi",
-          "name": "Nigdi Bus Stand",
-          "lat": 18.6534,
-          "lng": 73.7712,
-          "segmentDistanceKm": 2.4
-        },
-        {
-          "id": "b149_chinchwad",
-          "name": "Chinchwad Station",
-          "lat": 18.6361,
-          "lng": 73.7915,
-          "segmentDistanceKm": 3.1
-        },
-        {
-          "id": "b149_kasarwadi",
-          "name": "Kasarwadi",
-          "lat": 18.5975,
-          "lng": 73.8211,
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
           "segmentDistanceKm": 3.2
         },
         {
-          "id": "b149_dapodi",
-          "name": "Dapodi",
-          "lat": 18.5682,
-          "lng": 73.8344,
-          "segmentDistanceKm": 4.1
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 2.9
         },
         {
-          "id": "b149_shivajinagar",
-          "name": "Shivajinagar",
-          "lat": 18.5303,
-          "lng": 73.8488,
-          "segmentDistanceKm": 2.8
+          "id": "b_bibwewadi",
+          "name": "Bibwewadi",
+          "lat": 18.4752,
+          "lng": 73.8562,
+          "segmentDistanceKm": 0.8
         },
         {
-          "id": "b149_pune_station",
+          "id": "b_bharat_jyoti",
+          "name": "Bharat Jyoti",
+          "lat": 18.4717,
+          "lng": 73.8636,
+          "segmentDistanceKm": 1.5
+        },
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 10, 19, 22, 26]
+    },
+    {
+      "routeNo": "24",
+      "routeNumbers": ["24"],
+      "label": "Katraj to Lohegaon via Swargate and Pune Station",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Katraj to Lohegaon via Pune Station; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 2.5
+        },
+        {
+          "id": "b_padmavati",
+          "name": "Padmavati",
+          "lat": 18.4712,
+          "lng": 73.8561,
+          "segmentDistanceKm": 3.4
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 3.6
+        },
+        {
+          "id": "b_pune_station",
           "name": "Pune Railway Station",
           "lat": 18.5288,
           "lng": 73.8744,
-          "segmentDistanceKm": 4.5
+          "segmentDistanceKm": 7.2
         },
         {
-          "id": "b149_magarpatta",
+          "id": "b_lohegaon",
+          "name": "Lohegaon",
+          "lat": 18.5804,
+          "lng": 73.9182,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 7, 15, 25, 42]
+    },
+    {
+      "routeNo": "24_R",
+      "routeNumbers": ["24"],
+      "label": "Lohegaon to Katraj via Pune Station and Swargate",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Lohegaon to Katraj return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_lohegaon",
+          "name": "Lohegaon",
+          "lat": 18.5804,
+          "lng": 73.9182,
+          "segmentDistanceKm": 7.2
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 3.6
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 3.4
+        },
+        {
+          "id": "b_padmavati",
+          "name": "Padmavati",
+          "lat": 18.4712,
+          "lng": 73.8561,
+          "segmentDistanceKm": 2.5
+        },
+        {
+          "id": "b_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 17, 27, 35, 42]
+    },
+    {
+      "routeNo": "29",
+      "routeNumbers": ["29"],
+      "label": "Swargate to Hadapsar via Magarpatta",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Swargate to Hadapsar via Magarpatta; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 7.8
+        },
+        {
+          "id": "b_magarpatta",
           "name": "Magarpatta City",
           "lat": 18.5142,
           "lng": 73.9275,
           "segmentDistanceKm": 2.2
         },
         {
-          "id": "b149_hadapsar",
+          "id": "b_hadapsar",
           "name": "Hadapsar Gadital",
           "lat": 18.5024,
           "lng": 73.9392,
           "segmentDistanceKm": 0
         }
       ],
-      "firstBusMin": 360,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 12,
-      "offPeakHeadwayMin": 20,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 7, 16, 26, 38, 46, 60, 67]
+      "stopOffsetMin": [0, 18, 25]
     },
     {
-      "routeNo": "204",
-      "label": "Hadapsar to Chinchwad",
+      "routeNo": "29_R",
+      "routeNumbers": ["29"],
+      "label": "Hadapsar to Swargate via Magarpatta",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Hadapsar to Swargate return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 2.2
+        },
+        {
+          "id": "b_magarpatta",
+          "name": "Magarpatta City",
+          "lat": 18.5142,
+          "lng": 73.9275,
+          "segmentDistanceKm": 7.8
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 7, 25]
+    },
+    {
+      "routeNo": "103",
+      "routeNumbers": ["103"],
+      "label": "Katraj to Kothrud Depot via Swargate and Deccan",
+      "firstDeparture": 375,
+      "peakHeadway": 12,
+      "offPeakHeadway": 18,
+      "verified": false,
+      "notes": "Katraj to Kothrud Depot; pending PMPML verification",
+      "firstBusMin": 375,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 18,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 5.9
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 6
+        },
+        {
+          "id": "b_kothrud_depot",
+          "name": "Kothrud Depot",
+          "lat": 18.5028,
+          "lng": 73.7942,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 16, 23, 38]
+    },
+    {
+      "routeNo": "103_R",
+      "routeNumbers": ["103"],
+      "label": "Kothrud Depot to Katraj via Deccan and Swargate",
+      "firstDeparture": 375,
+      "peakHeadway": 12,
+      "offPeakHeadway": 18,
+      "verified": false,
+      "notes": "Kothrud Depot to Katraj return; pending PMPML verification",
+      "firstBusMin": 375,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 18,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_kothrud_depot",
+          "name": "Kothrud Depot",
+          "lat": 18.5028,
+          "lng": 73.7942,
+          "segmentDistanceKm": 6
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 5.9
+        },
+        {
+          "id": "b_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 15, 22, 38]
+    },
+    {
+      "routeNo": "149",
+      "routeNumbers": ["149"],
+      "label": "Hadapsar to Nigdi via Yerwada and Pimpri",
       "firstDeparture": 360,
       "peakHeadway": 12,
       "offPeakHeadway": 20,
       "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
-      "stops": [
-        {
-          "id": "b204_hadapsar",
-          "name": "Hadapsar Gadital",
-          "lat": 18.5024,
-          "lng": 73.9392,
-          "segmentDistanceKm": 3.2
-        },
-        {
-          "id": "b204_fatima_nagar",
-          "name": "Fatima Nagar",
-          "lat": 18.5052,
-          "lng": 73.9015,
-          "segmentDistanceKm": 3.4
-        },
-        {
-          "id": "b204_pune_station",
-          "name": "Pune Railway Station",
-          "lat": 18.5288,
-          "lng": 73.8744,
-          "segmentDistanceKm": 5.2
-        },
-        {
-          "id": "b204_dapodi",
-          "name": "Dapodi",
-          "lat": 18.5682,
-          "lng": 73.8344,
-          "segmentDistanceKm": 3.2
-        },
-        {
-          "id": "b204_kasarwadi",
-          "name": "Kasarwadi",
-          "lat": 18.5975,
-          "lng": 73.8211,
-          "segmentDistanceKm": 3.1
-        },
-        {
-          "id": "b204_chinchwad",
-          "name": "Chinchwad Station",
-          "lat": 18.6361,
-          "lng": 73.7915,
-          "segmentDistanceKm": 0
-        }
-      ],
+      "notes": "Hadapsar to Nigdi cross-city corridor; pending PMPML verification",
       "firstBusMin": 360,
       "lastBusMin": 1380,
       "peakHeadwayMin": 12,
       "offPeakHeadwayMin": 20,
       "nightHeadwayMin": 30,
       "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 10, 20, 36, 46, 55]
+      "stops": [
+        {
+          "id": "b_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 6.8
+        },
+        {
+          "id": "b_yerwada",
+          "name": "Yerwada",
+          "lat": 18.5524,
+          "lng": 73.9015,
+          "segmentDistanceKm": 13.5
+        },
+        {
+          "id": "b_pimpri",
+          "name": "Pimpri",
+          "lat": 18.6258,
+          "lng": 73.8012,
+          "segmentDistanceKm": 4.3
+        },
+        {
+          "id": "b_nigdi",
+          "name": "Nigdi Bus Stand",
+          "lat": 18.6534,
+          "lng": 73.7712,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 18, 45, 56]
+    },
+    {
+      "routeNo": "149_R",
+      "routeNumbers": ["149"],
+      "label": "Nigdi to Hadapsar via Pimpri and Yerwada",
+      "firstDeparture": 360,
+      "peakHeadway": 12,
+      "offPeakHeadway": 20,
+      "verified": false,
+      "notes": "Nigdi to Hadapsar return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 12,
+      "offPeakHeadwayMin": 20,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_nigdi",
+          "name": "Nigdi Bus Stand",
+          "lat": 18.6534,
+          "lng": 73.7712,
+          "segmentDistanceKm": 4.3
+        },
+        {
+          "id": "b_pimpri",
+          "name": "Pimpri",
+          "lat": 18.6258,
+          "lng": 73.8012,
+          "segmentDistanceKm": 13.5
+        },
+        {
+          "id": "b_yerwada",
+          "name": "Yerwada",
+          "lat": 18.5524,
+          "lng": 73.9015,
+          "segmentDistanceKm": 6.8
+        },
+        {
+          "id": "b_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 11, 38, 56]
+    },
+    {
+      "routeNo": "204",
+      "routeNumbers": ["204"],
+      "label": "Swargate to Hinjewadi Phase 3 via Deccan and Baner",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Swargate to Hinjewadi corridor; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 8.2
+        },
+        {
+          "id": "b_baner",
+          "name": "Baner",
+          "lat": 18.559,
+          "lng": 73.7845,
+          "segmentDistanceKm": 5.2
+        },
+        {
+          "id": "b_wakad",
+          "name": "Wakad Bridge",
+          "lat": 18.5982,
+          "lng": 73.7628,
+          "segmentDistanceKm": 6.1
+        },
+        {
+          "id": "b_hinjewadi_p3",
+          "name": "Hinjewadi Phase 3",
+          "lat": 18.5824,
+          "lng": 73.7112,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 7, 26, 38, 52]
+    },
+    {
+      "routeNo": "204_R",
+      "routeNumbers": ["204"],
+      "label": "Hinjewadi Phase 3 to Swargate via Baner and Deccan",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Hinjewadi to Swargate return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_hinjewadi_p3",
+          "name": "Hinjewadi Phase 3",
+          "lat": 18.5824,
+          "lng": 73.7112,
+          "segmentDistanceKm": 6.1
+        },
+        {
+          "id": "b_wakad",
+          "name": "Wakad Bridge",
+          "lat": 18.5982,
+          "lng": 73.7628,
+          "segmentDistanceKm": 5.2
+        },
+        {
+          "id": "b_baner",
+          "name": "Baner",
+          "lat": 18.559,
+          "lng": 73.7845,
+          "segmentDistanceKm": 8.2
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 2.1
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 14, 26, 45, 52]
+    },
+    {
+      "routeNo": "115",
+      "routeNumbers": ["115"],
+      "label": "Pune Railway Station to Hinjewadi Phase 3",
+      "firstDeparture": 370,
+      "peakHeadway": 8,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Pune Station to Hinjewadi Phase 3; pending PMPML verification",
+      "firstBusMin": 370,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 6.2
+        },
+        {
+          "id": "b_baner",
+          "name": "Baner",
+          "lat": 18.559,
+          "lng": 73.7845,
+          "segmentDistanceKm": 5.2
+        },
+        {
+          "id": "b_wakad",
+          "name": "Wakad Bridge",
+          "lat": 18.5982,
+          "lng": 73.7628,
+          "segmentDistanceKm": 6.1
+        },
+        {
+          "id": "b_hinjewadi_p3",
+          "name": "Hinjewadi Phase 3",
+          "lat": 18.5824,
+          "lng": 73.7112,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 8, 22, 33, 48]
+    },
+    {
+      "routeNo": "115_R",
+      "routeNumbers": ["115"],
+      "label": "Hinjewadi Phase 3 to Pune Railway Station via Baner and Shivajinagar",
+      "firstDeparture": 370,
+      "peakHeadway": 8,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Hinjewadi to Pune Station return; pending PMPML verification",
+      "firstBusMin": 370,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_hinjewadi_p3",
+          "name": "Hinjewadi Phase 3",
+          "lat": 18.5824,
+          "lng": 73.7112,
+          "segmentDistanceKm": 6.1
+        },
+        {
+          "id": "b_wakad",
+          "name": "Wakad Bridge",
+          "lat": 18.5982,
+          "lng": 73.7628,
+          "segmentDistanceKm": 5.2
+        },
+        {
+          "id": "b_baner",
+          "name": "Baner",
+          "lat": 18.559,
+          "lng": 73.7845,
+          "segmentDistanceKm": 6.2
+        },
+        {
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 2.8
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 15, 26, 40, 48]
+    },
+    {
+      "routeNo": "158",
+      "routeNumbers": ["158", "159"],
+      "label": "Pune Railway Station to Wagholi via Viman Nagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Pune Station to Wagholi corridor; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 5.6
+        },
+        {
+          "id": "b_viman_nagar",
+          "name": "Viman Nagar",
+          "lat": 18.5642,
+          "lng": 73.9125,
+          "segmentDistanceKm": 7.2
+        },
+        {
+          "id": "b_wagholi",
+          "name": "Wagholi",
+          "lat": 18.5806,
+          "lng": 73.9833,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 15, 30]
+    },
+    {
+      "routeNo": "158_R",
+      "routeNumbers": ["158", "159"],
+      "label": "Wagholi to Pune Railway Station via Viman Nagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Wagholi to Pune Station return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_wagholi",
+          "name": "Wagholi",
+          "lat": 18.5806,
+          "lng": 73.9833,
+          "segmentDistanceKm": 7.2
+        },
+        {
+          "id": "b_viman_nagar",
+          "name": "Viman Nagar",
+          "lat": 18.5642,
+          "lng": 73.9125,
+          "segmentDistanceKm": 5.6
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 15, 30]
+    },
+    {
+      "routeNo": "11",
+      "routeNumbers": ["11", "12"],
+      "label": "Upper Indira Nagar Depot to PCMC Bhavan via Shivajinagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Upper Depot to PCMC corridor; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 4.8
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 12
+        },
+        {
+          "id": "b_pcmc",
+          "name": "PCMC Bhavan",
+          "lat": 18.6298,
+          "lng": 73.8031,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 14, 23, 47]
+    },
+    {
+      "routeNo": "11_R",
+      "routeNumbers": ["11", "12"],
+      "label": "PCMC Bhavan to Upper Indira Nagar Depot via Shivajinagar",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "PCMC to Upper Depot return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_pcmc",
+          "name": "PCMC Bhavan",
+          "lat": 18.6298,
+          "lng": 73.8031,
+          "segmentDistanceKm": 12
+        },
+        {
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
+          "segmentDistanceKm": 3.2
+        },
+        {
+          "id": "b_swargate",
+          "name": "Swargate",
+          "lat": 18.5015,
+          "lng": 73.8542,
+          "segmentDistanceKm": 4.8
+        },
+        {
+          "id": "b_upper_depot",
+          "name": "Upper Indira Nagar Depot",
+          "lat": 18.4604,
+          "lng": 73.8721,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 24, 33, 47]
+    },
+    {
+      "routeNo": "94",
+      "routeNumbers": ["94"],
+      "label": "Kothrud Depot to Hadapsar via Deccan and Pune Railway Station",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Kothrud Depot to Hadapsar via Pune Station; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_kothrud_depot",
+          "name": "Kothrud Depot",
+          "lat": 18.5028,
+          "lng": 73.7942,
+          "segmentDistanceKm": 6
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 3.8
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 8.5
+        },
+        {
+          "id": "b_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 15, 24, 42]
+    },
+    {
+      "routeNo": "94_R",
+      "routeNumbers": ["94"],
+      "label": "Hadapsar to Kothrud Depot via Pune Railway Station and Deccan",
+      "firstDeparture": 360,
+      "peakHeadway": 10,
+      "offPeakHeadway": 15,
+      "verified": false,
+      "notes": "Hadapsar to Kothrud Depot return; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 10,
+      "offPeakHeadwayMin": 15,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
+      "stops": [
+        {
+          "id": "b_hadapsar",
+          "name": "Hadapsar Gadital",
+          "lat": 18.5024,
+          "lng": 73.9392,
+          "segmentDistanceKm": 8.5
+        },
+        {
+          "id": "b_pune_station",
+          "name": "Pune Railway Station",
+          "lat": 18.5288,
+          "lng": 73.8744,
+          "segmentDistanceKm": 3.8
+        },
+        {
+          "id": "b_deccan",
+          "name": "Deccan Gymkhana",
+          "lat": 18.519,
+          "lng": 73.8485,
+          "segmentDistanceKm": 6
+        },
+        {
+          "id": "b_kothrud_depot",
+          "name": "Kothrud Depot",
+          "lat": 18.5028,
+          "lng": 73.7942,
+          "segmentDistanceKm": 0
+        }
+      ],
+      "stopOffsetMin": [0, 18, 27, 42]
     },
     {
       "routeNo": "BRT_1",
+      "routeNumbers": ["BRT_1"],
       "label": "Rainbow BRT: Swargate to Katraj",
       "firstDeparture": 360,
       "peakHeadway": 6,
       "offPeakHeadway": 10,
       "verified": false,
       "notes": "PMPML Rainbow BRT dedicated median corridor; pending GTFS live cross-check",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 6,
+      "offPeakHeadwayMin": 10,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
       "stops": [
         {
           "id": "brt1_swargate",
@@ -354,26 +1287,27 @@
           "segmentDistanceKm": 0
         }
       ],
-      "firstBusMin": 360,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 6,
-      "offPeakHeadwayMin": 10,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
       "stopOffsetMin": [0, 4, 7, 11, 14, 18]
     },
     {
       "routeNo": "111",
-      "label": "Swargate to Pune Station",
+      "routeNumbers": ["111"],
+      "label": "Swargate to Pune Railway Station via Camp",
       "firstDeparture": 360,
       "peakHeadway": 8,
       "offPeakHeadway": 12,
       "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
+      "notes": "Swargate to Pune Station via MG Road / Camp; pending PMPML verification",
+      "firstBusMin": 360,
+      "lastBusMin": 1380,
+      "peakHeadwayMin": 8,
+      "offPeakHeadwayMin": 12,
+      "nightHeadwayMin": 30,
+      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
       "stops": [
         {
-          "id": "b111_swargate",
-          "name": "Swargate Bus Stand",
+          "id": "b_swargate",
+          "name": "Swargate",
           "lat": 18.5015,
           "lng": 73.8542,
           "segmentDistanceKm": 1.1
@@ -393,193 +1327,82 @@
           "segmentDistanceKm": 1.2
         },
         {
-          "id": "b111_pulgate",
-          "name": "Pulgate (Camp)",
-          "lat": 18.5118,
-          "lng": 73.8812,
+          "id": "b_mg_road_camp",
+          "name": "MG Road / Camp",
+          "lat": 18.5175,
+          "lng": 73.8805,
           "segmentDistanceKm": 2.1
         },
         {
-          "id": "b111_pune_station",
+          "id": "b_pune_station",
           "name": "Pune Railway Station",
           "lat": 18.5288,
           "lng": 73.8744,
           "segmentDistanceKm": 0
         }
       ],
-      "firstBusMin": 360,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 8,
-      "offPeakHeadwayMin": 12,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
       "stopOffsetMin": [0, 3, 8, 12, 18]
     },
     {
-      "routeNo": "115",
-      "label": "Pune Station to Hinjawadi Phase 3",
-      "firstDeparture": 370,
-      "peakHeadway": 8,
-      "offPeakHeadway": 15,
-      "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
-      "stops": [
-        {
-          "id": "b115_pune_station",
-          "name": "Pune Railway Station",
-          "lat": 18.5288,
-          "lng": 73.8744,
-          "segmentDistanceKm": 2.8
-        },
-        {
-          "id": "b115_shivajinagar",
-          "name": "Shivajinagar",
-          "lat": 18.5303,
-          "lng": 73.8488,
-          "segmentDistanceKm": 2.4
-        },
-        {
-          "id": "b115_pune_univ",
-          "name": "Savitribai Phule Pune University",
-          "lat": 18.5528,
-          "lng": 73.8242,
-          "segmentDistanceKm": 2.3
-        },
-        {
-          "id": "b115_aundh",
-          "name": "Aundh Gaon",
-          "lat": 18.5632,
-          "lng": 73.8078,
-          "segmentDistanceKm": 3.8
-        },
-        {
-          "id": "b115_wakad",
-          "name": "Wakad Bridge",
-          "lat": 18.5982,
-          "lng": 73.7628,
-          "segmentDistanceKm": 2.5
-        },
-        {
-          "id": "b115_hinjawadi_p1",
-          "name": "Hinjawadi Shivaji Chowk (Phase 1)",
-          "lat": 18.5912,
-          "lng": 73.7385,
-          "segmentDistanceKm": 3.1
-        },
-        {
-          "id": "b115_hinjawadi_p3",
-          "name": "Megapolis Circle (Phase 3)",
-          "lat": 18.5824,
-          "lng": 73.7112,
-          "segmentDistanceKm": 0
-        }
-      ],
-      "firstBusMin": 370,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 8,
-      "offPeakHeadwayMin": 15,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 8, 15, 22, 33, 41, 50]
-    },
-    {
-      "routeNo": "174",
-      "label": "Kothrud Depot to Pune Station",
+      "routeNo": "2",
+      "routeNumbers": ["2"],
+      "label": "Katraj to Shivajinagar",
       "firstDeparture": 360,
       "peakHeadway": 10,
       "offPeakHeadway": 15,
       "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
-      "stops": [
-        {
-          "id": "b174_kothrud_depot",
-          "name": "Kothrud Depot",
-          "lat": 18.5028,
-          "lng": 73.7942,
-          "segmentDistanceKm": 2.1
-        },
-        {
-          "id": "b174_nal_stop",
-          "name": "Nal Stop",
-          "lat": 18.5132,
-          "lng": 73.834,
-          "segmentDistanceKm": 1.6
-        },
-        {
-          "id": "b174_deccan",
-          "name": "Deccan Gymkhana",
-          "lat": 18.519,
-          "lng": 73.8485,
-          "segmentDistanceKm": 1.4
-        },
-        {
-          "id": "b174_shivajinagar",
-          "name": "Shivajinagar",
-          "lat": 18.5303,
-          "lng": 73.8488,
-          "segmentDistanceKm": 2.8
-        },
-        {
-          "id": "b174_pune_station",
-          "name": "Pune Railway Station",
-          "lat": 18.5288,
-          "lng": 73.8744,
-          "segmentDistanceKm": 0
-        }
-      ],
+      "notes": "Katraj to Shivajinagar; pending PMPML verification",
       "firstBusMin": 360,
       "lastBusMin": 1380,
       "peakHeadwayMin": 10,
       "offPeakHeadwayMin": 15,
       "nightHeadwayMin": 30,
       "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 6, 11, 15, 23]
-    },
-    {
-      "routeNo": "208",
-      "label": "Swargate to Hadapsar Gadital",
-      "firstDeparture": 360,
-      "peakHeadway": 10,
-      "offPeakHeadway": 15,
-      "verified": false,
-      "notes": "Route stops and timings pending official PMPML GTFS verification",
       "stops": [
         {
-          "id": "b208_swargate",
+          "id": "b_katraj",
+          "name": "Katraj Bus Stand",
+          "lat": 18.4485,
+          "lng": 73.8587,
+          "segmentDistanceKm": 1.2
+        },
+        {
+          "id": "b2_bharati_vidyapeeth",
+          "name": "Bharati Vidyapeeth",
+          "lat": 18.4578,
+          "lng": 73.8542,
+          "segmentDistanceKm": 1.4
+        },
+        {
+          "id": "b_padmavati",
+          "name": "Padmavati",
+          "lat": 18.4712,
+          "lng": 73.8561,
+          "segmentDistanceKm": 1.8
+        },
+        {
+          "id": "b_swargate",
           "name": "Swargate",
           "lat": 18.5015,
           "lng": 73.8542,
           "segmentDistanceKm": 1.6
         },
         {
-          "id": "b208_golibar",
-          "name": "Golibar Maidan",
-          "lat": 18.5065,
-          "lng": 73.8732,
-          "segmentDistanceKm": 2.2
+          "id": "b2_shaniwar_wada",
+          "name": "Shaniwar Wada",
+          "lat": 18.5195,
+          "lng": 73.8553,
+          "segmentDistanceKm": 1.5
         },
         {
-          "id": "b208_fatima_nagar",
-          "name": "Fatima Nagar",
-          "lat": 18.5052,
-          "lng": 73.9015,
-          "segmentDistanceKm": 2.7
-        },
-        {
-          "id": "b208_hadapsar",
-          "name": "Hadapsar Gadital",
-          "lat": 18.5024,
-          "lng": 73.9392,
+          "id": "b_shivajinagar",
+          "name": "Shivajinagar Station",
+          "lat": 18.5303,
+          "lng": 73.8488,
           "segmentDistanceKm": 0
         }
       ],
-      "firstBusMin": 360,
-      "lastBusMin": 1380,
-      "peakHeadwayMin": 10,
-      "offPeakHeadwayMin": 15,
-      "nightHeadwayMin": 30,
-      "scheduleSource": "estimated from configured headway, not PMPML published timetable",
-      "stopOffsetMin": [0, 5, 12, 20]
+      "stopOffsetMin": [0, 4, 8, 13, 18, 23]
     }
   ]
 }
