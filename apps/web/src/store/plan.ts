@@ -26,6 +26,12 @@ export interface ValidationErrors {
   budget?: string;
 }
 
+export interface LocationMessage {
+  type: 'error' | 'info';
+  text: string;
+  showDemoFallback?: boolean;
+}
+
 export interface PlanState {
   origin: StopPoint | null;
   destination: StopPoint | null;
@@ -39,6 +45,11 @@ export interface PlanState {
   validationErrors: ValidationErrors;
   recentPlaces: RecentPlaceRecord[];
 
+  // Live GPS state (not persisted, cleared on reload)
+  userLocation: { lat: number; lng: number; accuracy?: number } | null;
+  isLocating: boolean;
+  locationMessage: LocationMessage | null;
+
   // Actions
   setOrigin: (point: StopPoint | null) => void;
   setDestination: (point: StopPoint | null) => void;
@@ -48,6 +59,13 @@ export interface PlanState {
   setBudget: (budget: number) => void;
   setSelectedRouteKey: (key: SelectedRouteKey) => void;
   selectRouteKey: (key: SelectedRouteKey) => void;
+  setUserLocation: (
+    loc: { lat: number; lng: number; accuracy?: number } | null,
+  ) => void;
+  setIsLocating: (val: boolean) => void;
+  setLocationMessage: (msg: LocationMessage | null) => void;
+  requestCurrentLocation: () => Promise<void>;
+  simulateDemoLocation: () => void;
   validate: () => boolean;
   planRoute: () => Promise<PlanResponse | null>;
   recordRecentPlace: (place: {
@@ -107,6 +125,142 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   problem: null,
   validationErrors: {},
   recentPlaces: loadRecentPlaces(),
+  userLocation: null,
+  isLocating: false,
+  locationMessage: null,
+
+  setUserLocation: (loc) => set({ userLocation: loc }),
+  setIsLocating: (val) => set({ isLocating: val }),
+  setLocationMessage: (msg) => set({ locationMessage: msg }),
+
+  simulateDemoLocation: () => {
+    // Verified Swargate coordinates from data/pune/places.json (18.5015, 73.8542)
+    const demoPlace = {
+      name: 'Current Location (Swargate)',
+      lat: 18.5015,
+      lng: 73.8542,
+    };
+    set((state) => {
+      const errors = { ...state.validationErrors };
+      delete errors.origin;
+      return {
+        origin: demoPlace,
+        userLocation: { lat: demoPlace.lat, lng: demoPlace.lng, accuracy: 25 },
+        isLocating: false,
+        locationMessage: null,
+        validationErrors: errors,
+      };
+    });
+  },
+
+  requestCurrentLocation: async () => {
+    set({ isLocating: true, locationMessage: null });
+
+    if (
+      typeof window !== 'undefined' &&
+      !window.isSecureContext &&
+      window.location.hostname !== 'localhost' &&
+      window.location.hostname !== '127.0.0.1'
+    ) {
+      set({
+        isLocating: false,
+        locationMessage: {
+          type: 'error',
+          text: 'Geolocation requires a secure context (HTTPS or localhost).',
+          showDemoFallback: true,
+        },
+      });
+      return;
+    }
+
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      set({
+        isLocating: false,
+        locationMessage: {
+          type: 'error',
+          text: 'Geolocation is not supported by your browser.',
+          showDemoFallback: true,
+        },
+      });
+      return;
+    }
+
+    try {
+      const position = await new Promise<GeolocationPosition>(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          });
+        },
+      );
+
+      const { latitude: lat, longitude: lng, accuracy } = position.coords;
+
+      // Check Pune bounding box: lat 18.40 to 18.70, lng 73.70 to 74.00
+      if (lat < 18.4 || lat > 18.7 || lng < 73.7 || lng > 74.0) {
+        set({
+          isLocating: false,
+          locationMessage: {
+            type: 'error',
+            text: 'You appear to be outside Pune. Pick a start point, or try the demo location.',
+            showDemoFallback: true,
+          },
+        });
+        return;
+      }
+
+      // Reverse geocode via API
+      let displayName = `Current Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+      try {
+        const geoRes = await api.reverseGeocode(lat, lng);
+        if (geoRes && geoRes.displayName) {
+          displayName = geoRes.displayName;
+        }
+      } catch {
+        // Fallback already prepared
+      }
+
+      set((state) => {
+        const errors = { ...state.validationErrors };
+        delete errors.origin;
+        return {
+          origin: {
+            name: displayName,
+            lat,
+            lng,
+          },
+          userLocation: { lat, lng, accuracy },
+          isLocating: false,
+          locationMessage: null,
+          validationErrors: errors,
+        };
+      });
+    } catch (err) {
+      const geoErr = err as GeolocationPositionError;
+      let text = 'Unable to retrieve location.';
+      if (geoErr && geoErr.code === 1) {
+        text =
+          'Location permission denied. Please allow access in browser settings, or try the demo location.';
+      } else if (geoErr && geoErr.code === 2) {
+        text =
+          'Position unavailable. Please check your GPS signal or try the demo location.';
+      } else if (geoErr && geoErr.code === 3) {
+        text =
+          'Location request timed out (10s). Please try again or use the demo location.';
+      }
+
+      set({
+        isLocating: false,
+        locationMessage: {
+          type: 'error',
+          text,
+          showDemoFallback: true,
+        },
+      });
+    }
+  },
 
   setOrigin: (point) => {
     set((state) => {

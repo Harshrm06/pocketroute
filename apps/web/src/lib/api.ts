@@ -154,6 +154,31 @@ export const api = {
   },
 
   /**
+   * Reverse geocodes coordinates to display name and area name.
+   */
+  async reverseGeocode(
+    lat: number,
+    lng: number,
+  ): Promise<{
+    displayName: string;
+    areaName: string;
+    lat: number;
+    lng: number;
+    source: 'cache' | 'nominatim' | 'fallback';
+  }> {
+    const params = new URLSearchParams();
+    params.set('lat', String(lat));
+    params.set('lng', String(lng));
+    return request<{
+      displayName: string;
+      areaName: string;
+      lat: number;
+      lng: number;
+      source: 'cache' | 'nominatim' | 'fallback';
+    }>(`/geo/reverse?${params.toString()}`);
+  },
+
+  /**
    * API health probe.
    */
   async getHealth(): Promise<HealthResponse> {

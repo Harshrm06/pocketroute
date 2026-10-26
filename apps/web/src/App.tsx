@@ -34,7 +34,13 @@ export const App: React.FC = () => {
   const mapRef = useRef<MapViewHandle>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
 
-  const { result, selectedRouteKey, budgetINR } = usePlanStore();
+  const {
+    result,
+    selectedRouteKey,
+    budgetINR,
+    userLocation,
+    requestCurrentLocation,
+  } = usePlanStore();
 
   // Active route: either planned route from store or default fixture route
   const activeRoute: Route = result?.routes[selectedRouteKey] ?? fixtureRoute;
@@ -115,6 +121,8 @@ export const App: React.FC = () => {
           allRoutes={result?.routes}
           selectedLegIndex={selectedLegIdx}
           onLegClick={(idx, leg) => handleSelectLeg(idx, leg)}
+          userLocation={userLocation}
+          onMyLocationClick={requestCurrentLocation}
         />
       </ErrorBoundary>
 

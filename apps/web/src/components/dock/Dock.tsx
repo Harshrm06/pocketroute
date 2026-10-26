@@ -18,6 +18,9 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
     status,
     error,
     validationErrors,
+    locationMessage,
+    setLocationMessage,
+    simulateDemoLocation,
     setOrigin,
     setDestination,
     swapEndpoints,
@@ -77,7 +80,40 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
           value={origin}
           onChange={setOrigin}
           error={validationErrors.origin}
+          isStart={true}
         />
+
+        {locationMessage && (
+          <div
+            role="alert"
+            data-testid="location-message-banner"
+            className="rounded-lg p-2.5 text-xs bg-amber-500/10 border border-amber-500/30 text-ink flex flex-col gap-1.5"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="leading-snug">{locationMessage.text}</span>
+              <button
+                type="button"
+                onClick={() => setLocationMessage(null)}
+                className="text-ink-muted hover:text-ink text-xs font-bold px-1"
+                aria-label="Dismiss notice"
+              >
+                ✕
+              </button>
+            </div>
+            {locationMessage.showDemoFallback && (
+              <button
+                type="button"
+                data-testid="simulate-gps-button"
+                onClick={() => {
+                  simulateDemoLocation();
+                }}
+                className="self-start inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-primary text-white text-[11px] font-medium hover:bg-primary-hover active:scale-95 transition-all cursor-pointer shadow-sm"
+              >
+                <span>Simulate GPS in Pune (VIT Bibwewadi / Swargate)</span>
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="relative flex items-center justify-center my-0.5 z-10">
           <div className="absolute inset-0 flex items-center">

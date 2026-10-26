@@ -294,4 +294,46 @@ describe('apps/api (Fastify integration tests)', () => {
       await rateLimitedApp.close();
     });
   });
+
+  describe('GET /api/v1/geo/reverse (PRD Section 22.2)', () => {
+    it('returns 400 validation error when lat or lng is missing', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/geo/reverse?lat=18.5204',
+      });
+      expect(res.statusCode).toBe(400);
+      const body = JSON.parse(res.body);
+      expect(body.title).toBe('Validation Error');
+    });
+
+    it('returns 200 with fallback or reverse geocoded area name for valid coordinates', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/geo/reverse?lat=18.5015&lng=73.8542',
+      });
+      expect(res.statusCode).toBe(200);
+      const body = JSON.parse(res.body);
+      expect(body.displayName).toContain('Current Location');
+      expect(body.areaName).toBeDefined();
+      expect(body.lat).toBe(18.5015);
+      expect(body.lng).toBe(73.8542);
+    });
+
+    it('serves repeated requests within 4-decimal precision from cache', async () => {
+      // 18.50151 and 18.50149 round to 18.5015
+      const res1 = await app.inject({
+        method: 'GET',
+        url: '/api/v1/geo/reverse?lat=18.50151&lng=73.85421',
+      });
+      expect(res1.statusCode).toBe(200);
+
+      const res2 = await app.inject({
+        method: 'GET',
+        url: '/api/v1/geo/reverse?lat=18.50152&lng=73.85422',
+      });
+      expect(res2.statusCode).toBe(200);
+      const body2 = JSON.parse(res2.body);
+      expect(body2.source).toBe('cache');
+    });
+  });
 });

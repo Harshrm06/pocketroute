@@ -12,6 +12,7 @@ import {
   MAX_WALK_LEG_M,
   MIN_TRANSFER_MIN,
   METRO_BOARDING_PENALTY_MIN,
+  PUNE_BOUNDING_BOX,
 } from '@pocketroute/shared';
 import { autoFareINR, cabFareINR } from '../pricing/index.js';
 import { walkMinutes } from '../timing/index.js';
@@ -510,6 +511,107 @@ export function buildQueryGraph(
     edgeCount,
     lineCount: staticResult.graph.lineCount,
   };
+}
+
+/**
+ * Options for first-mile feeder edge construction.
+ */
+export interface FirstMileEdgeOptions {
+  localHourIST?: number;
+  useRoadFactor?: boolean;
+}
+
+/**
+ * First-mile connector (PRD Section 22.2):
+ * - Treats the GPS point as the origin node for this query.
+ * - Finds the 3 nearest transit stops by haversine distance within Pune.
+ * - For each: if distance <= 1.2 km, adds a WALK access edge at Rs 0.
+ *   If distance > 1.2 km and <= 4 km, adds an AUTO feeder edge priced
+ *   with the existing auto formula from the pricing module (not hard-coded).
+ * - Flags geometryQuality as "estimated" (Bézier fallback without external I/O).
+ * - Validates that origin coordinates fall within Pune bounding box.
+ */
+export function buildFirstMileEdges(
+  origin: LatLng,
+  allStops: TransitStop[],
+  options?: FirstMileEdgeOptions,
+): Edge[] {
+  if (
+    origin.lat < PUNE_BOUNDING_BOX.minLat ||
+    origin.lat > PUNE_BOUNDING_BOX.maxLat ||
+    origin.lng < PUNE_BOUNDING_BOX.minLng ||
+    origin.lng > PUNE_BOUNDING_BOX.maxLng
+  ) {
+    throw new Error(
+      `Origin coordinate (${origin.lat}, ${origin.lng}) is outside the Pune bounding box [${PUNE_BOUNDING_BOX.minLat}-${PUNE_BOUNDING_BOX.maxLat}, ${PUNE_BOUNDING_BOX.minLng}-${PUNE_BOUNDING_BOX.maxLng}].`,
+    );
+  }
+
+  // Filter stops within Pune bounding box
+  const puneStops = allStops.filter(
+    (s) =>
+      s.lat >= PUNE_BOUNDING_BOX.minLat &&
+      s.lat <= PUNE_BOUNDING_BOX.maxLat &&
+      s.lng >= PUNE_BOUNDING_BOX.minLng &&
+      s.lng <= PUNE_BOUNDING_BOX.maxLng,
+  );
+
+  // Compute haversine distance to each stop
+  const stopsWithDist = puneStops.map((stop) => ({
+    stop,
+    distKm: haversineKm(origin, { lat: stop.lat, lng: stop.lng }),
+  }));
+  stopsWithDist.sort((a, b) => a.distKm - b.distKm);
+
+  // Deduplicate by stop.nodeId and take 3 nearest unique stops
+  const nearest3: typeof stopsWithDist = [];
+  const seen = new Set<string>();
+  for (const item of stopsWithDist) {
+    if (!seen.has(item.stop.nodeId)) {
+      seen.add(item.stop.nodeId);
+      nearest3.push(item);
+      if (nearest3.length === 3) break;
+    }
+  }
+
+  const localHour = options?.localHourIST ?? 12;
+  const edges: Edge[] = [];
+
+  for (const { stop, distKm } of nearest3) {
+    if (distKm <= 1.2) {
+      // Walk access edge at Rs 0
+      edges.push(makeWalkEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE'));
+    } else if (distKm <= 4.0) {
+      // Auto feeder edge priced with existing pricing module formula
+      const roadKm = options?.useRoadFactor === false ? distKm : distKm * 1.25;
+      const rideMin = (roadKm / AUTO_SPEED_KM_PER_H) * 60;
+      const totalMin = AUTO_PICKUP_MIN + rideMin;
+      const from = encodeState(ORIGIN_NODE_ID, 'NONE');
+      const to = encodeState(stop.nodeId, 'AUTO');
+      const fare = autoFareINR(roadKm, localHour);
+
+      edges.push({
+        from,
+        to,
+        line: 'AUTO',
+        mode: 'AUTO',
+        fareINR: fare,
+        minTimeMin: totalMin,
+        timeAt: (t: number) => {
+          const hour = Math.floor((((t % 1440) + 1440) % 1440) / 60);
+          void autoFareINR(roadKm, hour);
+          return t + totalMin;
+        },
+        meta: {
+          distanceKm: roadKm,
+          stops: 0,
+          geometryQuality: 'estimated',
+        },
+      });
+    }
+  }
+
+  return edges;
 }
 
 /** Re-export constants for convenience. */

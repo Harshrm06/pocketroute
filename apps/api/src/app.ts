@@ -14,6 +14,7 @@ import { planRequestSchema, type ProblemDetail } from '@pocketroute/shared';
 import { planRoutes } from '@pocketroute/engine';
 import { loadPuneDataPack, type PuneDataPack } from './data.js';
 import { PlacesSearchService } from './places.js';
+import { ReverseGeocodingService } from './geo.js';
 
 export interface AppOptions {
   dataDir?: string;
@@ -66,6 +67,7 @@ export async function buildApp(
     dataPack.places.places,
     options.nominatimUrl,
   );
+  const geoService = new ReverseGeocodingService(options.nominatimUrl);
 
   const app = fastify({
     bodyLimit: 8192, // 8 KB limit per PRD §9.5
@@ -255,6 +257,33 @@ export async function buildApp(
 
       const results = await placesService.search(q, limit);
       return reply.status(200).send(results);
+    });
+
+    // GET /api/v1/geo/reverse?lat=&lng=
+    v1.get<{
+      Querystring: { lat?: string; lng?: string };
+    }>('/geo/reverse', async (req, reply) => {
+      const latStr = req.query.lat;
+      const lngStr = req.query.lng;
+
+      if (
+        !latStr ||
+        !lngStr ||
+        isNaN(Number(latStr)) ||
+        isNaN(Number(lngStr))
+      ) {
+        return reply.status(400).send({
+          type: 'https://pocketroute.example/errors/validation-error',
+          title: 'Validation Error',
+          status: 400,
+          detail: 'Missing or invalid lat/lng query parameters.',
+        });
+      }
+
+      const lat = Number(latStr);
+      const lng = Number(lngStr);
+      const result = await geoService.reverse(lat, lng);
+      return reply.status(200).send(result);
     });
 
     // GET /api/v1/network

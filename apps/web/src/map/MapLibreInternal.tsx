@@ -101,6 +101,7 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       onMapClick,
       onMarkerDragEnd,
       userLocation,
+      onMyLocationClick,
       simulatedCommuter,
     },
     ref,
@@ -1035,6 +1036,45 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       }
     }, [simulatedCommuter]);
 
+    // Handle updates to userLocation (PRD §22.2)
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map) return;
+
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+      }
+
+      if (userLocation) {
+        const el = document.createElement('div');
+        el.className =
+          'user-location-marker relative flex items-center justify-center pointer-events-none select-none';
+        el.style.zIndex = '410';
+        el.setAttribute('data-testid', 'user-location-marker');
+        el.innerHTML = `
+          <div class="absolute w-8 h-8 rounded-full bg-blue-500/30 gps-pulse-ring"></div>
+          <div class="relative w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-md"></div>
+        `;
+        const marker = new Marker({ element: el, anchor: 'center' })
+          .setLngLat([userLocation.lng, userLocation.lat])
+          .addTo(map);
+        userLocationMarkerRef.current = marker;
+      }
+    }, [userLocation]);
+
+    const handleMyLocation = () => {
+      if (userLocation && mapRef.current) {
+        mapRef.current.flyTo({
+          center: [userLocation.lng, userLocation.lat],
+          zoom: 15,
+          essential: true,
+        });
+      } else if (onMyLocationClick) {
+        onMyLocationClick();
+      }
+    };
+
     // Handle updates to selectedLegIndex
     useEffect(() => {
       if (selectedLegIndex !== selectedIndexRef.current) {
@@ -1044,12 +1084,44 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
 
     return (
       <div
-        ref={mapContainerRef}
-        aria-label="Pune Interactive Transit Map"
-        role="region"
-        style={{ width: '100vw', height: '100vh' }}
-        className={`relative overflow-hidden ${className}`}
-      />
+        className={`relative overflow-hidden w-screen h-screen ${className}`}
+      >
+        <div
+          ref={mapContainerRef}
+          aria-label="Pune Interactive Transit Map"
+          role="region"
+          style={{ width: '100%', height: '100%' }}
+          className="absolute inset-0"
+        />
+
+        {/* Floating "My Location" Button (PRD Section 22.2) */}
+        <button
+          type="button"
+          onClick={handleMyLocation}
+          aria-label="My Location"
+          data-testid="my-location-button"
+          className="absolute bottom-24 right-4 z-20 w-11 h-11 rounded-full bg-surface-solid/90 hover:bg-surface-solid shadow-e3 border border-border flex items-center justify-center text-ink hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus backdrop-blur-sm"
+          title="Recenter on my location"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="w-5 h-5 text-primary"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="2" x2="12" y2="6" />
+            <line x1="12" y1="18" x2="12" y2="22" />
+            <line x1="2" y1="12" x2="6" y2="12" />
+            <line x1="18" y1="12" x2="22" y2="12" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </div>
     );
   },
 );

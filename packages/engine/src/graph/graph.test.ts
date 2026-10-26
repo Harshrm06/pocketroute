@@ -5,9 +5,10 @@ import {
   METRO_BOARDING_PENALTY_MIN,
   MIN_TRANSFER_MIN,
 } from '@pocketroute/shared';
-import { metroFareINR } from '../pricing/index.js';
+import { metroFareINR, autoFareINR } from '../pricing/index.js';
 import { haversineKm } from '../geometry/index.js';
 import {
+  buildFirstMileEdges,
   buildQueryGraph,
   buildStaticGraph,
   decodeState,
@@ -16,6 +17,7 @@ import {
   getOutgoingEdges,
   reverseGraph,
   type Edge,
+  type TransitStop,
 } from './index.js';
 
 describe('packages/engine/src/graph', () => {
@@ -355,6 +357,116 @@ describe('packages/engine/src/graph', () => {
       );
 
       expect(match).toBeDefined();
+    });
+  });
+
+  describe('First-mile connector (PRD Section 22.2)', () => {
+    it('throws a validation error when GPS origin is outside the Pune bounding box', () => {
+      // Mumbai coordinates (outside Pune bounding box: 18.40-18.70, 73.70-74.00)
+      const outsidePoint = { lat: 19.076, lng: 72.877 };
+      expect(() =>
+        buildFirstMileEdges(outsidePoint, staticResult.allStops),
+      ).toThrow(/outside the Pune bounding box/i);
+    });
+
+    it('selects exactly the 3 nearest transit stops by Haversine distance', () => {
+      // Origin near Swargate
+      const origin = { lat: 18.5015, lng: 73.8542 };
+      const edges = buildFirstMileEdges(origin, staticResult.allStops);
+
+      // Should produce at most 3 edges (one for each of the 3 nearest stops within feeder range)
+      expect(edges.length).toBeGreaterThan(0);
+      expect(edges.length).toBeLessThanOrEqual(3);
+
+      // Every edge must originate from 'O|NONE'
+      for (const e of edges) {
+        expect(e.from).toBe('O|NONE');
+      }
+    });
+
+    it('adds a WALK access edge at Rs 0 when stop distance <= 1.2 km', () => {
+      // Create a mock stop 0.8 km away
+      const origin = { lat: 18.5204, lng: 73.8567 };
+      const testStops: TransitStop[] = [
+        {
+          nodeId: 'stop_close',
+          name: 'Close Stop',
+          lat: 18.525, // ~0.5 km away
+          lng: 73.8567,
+          type: 'bus_stop',
+          line: 'BUS_2',
+        },
+      ];
+
+      const edges = buildFirstMileEdges(origin, testStops);
+      expect(edges.length).toBe(1);
+      const walkEdge = edges[0]!;
+      expect(walkEdge.mode).toBe('WALK');
+      expect(walkEdge.fareINR).toBe(0);
+      expect(walkEdge.meta.distanceKm).toBeLessThanOrEqual(1.2);
+    });
+
+    it('adds an AUTO feeder edge priced with existing auto formula at 2 km and 4 km', () => {
+      const origin = { lat: 18.5, lng: 73.85 };
+
+      // Exact latitude delta for d km: d / 6371 * (180 / Math.PI)
+      const degForKm = (km: number) => (km / 6371) * (180 / Math.PI);
+
+      // Stop exactly 2.0 km away
+      const stop2km: TransitStop = {
+        nodeId: 'stop_2km',
+        name: 'Stop 2km',
+        lat: origin.lat + degForKm(2.0),
+        lng: origin.lng,
+        type: 'bus_stop',
+        line: 'BUS_2',
+      };
+
+      // Stop exactly 3.95 km away (within <= 4.0 km feeder threshold)
+      const stop4km: TransitStop = {
+        nodeId: 'stop_4km',
+        name: 'Stop 4km',
+        lat: origin.lat + degForKm(3.95),
+        lng: origin.lng,
+        type: 'bus_stop',
+        line: 'BUS_2',
+      };
+
+      // Stop 6.0 km away (exceeds 4.0 km threshold -> should not produce edge)
+      const stop6km: TransitStop = {
+        nodeId: 'stop_6km',
+        name: 'Stop 6km',
+        lat: origin.lat + degForKm(6.0),
+        lng: origin.lng,
+        type: 'bus_stop',
+        line: 'BUS_2',
+      };
+
+      const edges = buildFirstMileEdges(origin, [stop2km, stop4km, stop6km], {
+        localHourIST: 12,
+      });
+
+      // Nearest 3 are stop2km, stop4km, stop6km
+      // stop2km and stop4km should produce AUTO edges; stop6km should not
+      expect(edges.length).toBe(2);
+
+      const edge2 = edges.find((e) => e.to.includes('stop_2km'))!;
+      const edge4 = edges.find((e) => e.to.includes('stop_4km'))!;
+
+      expect(edge2).toBeDefined();
+      expect(edge2.mode).toBe('AUTO');
+      // Must match dynamic autoFareINR formula, NOT a hard-coded value
+      const expectedFare2 = autoFareINR(edge2.meta.distanceKm, 12);
+      expect(edge2.fareINR).toBe(expectedFare2);
+
+      expect(edge4).toBeDefined();
+      expect(edge4.mode).toBe('AUTO');
+      const expectedFare4 = autoFareINR(edge4.meta.distanceKm, 12);
+      expect(edge4.fareINR).toBe(expectedFare4);
+
+      // Verify geometryQuality is flagged 'estimated'
+      expect(edge2.meta.geometryQuality).toBe('estimated');
+      expect(edge4.meta.geometryQuality).toBe('estimated');
     });
   });
 });
