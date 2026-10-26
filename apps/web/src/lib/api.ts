@@ -80,6 +80,20 @@ export interface PlaceSearchResult {
   source: 'local' | 'nominatim';
 }
 
+export interface GeoSearchResult {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  source: 'local' | 'osm';
+  transitStopId?: string;
+}
+
+export interface GeoSearchResponse {
+  results: GeoSearchResult[];
+  liveSearch?: 'available' | 'unavailable';
+}
+
 export interface NetworkResponsePayload {
   lines: Array<{
     id: string;
@@ -164,6 +178,16 @@ export const api = {
     params.set('q', query);
     if (limit) params.set('limit', String(limit));
     return request<PlaceSearchResult[]>(`/places/search?${params.toString()}`);
+  },
+
+  /**
+   * Hybrid autocomplete search for stops, places, and live OSM. (PRD Section 23 & Step 4)
+   */
+  async searchGeo(query: string, limit = 8): Promise<GeoSearchResponse> {
+    const params = new URLSearchParams();
+    params.set('q', query);
+    if (limit) params.set('limit', String(limit));
+    return request<GeoSearchResponse>(`/geo/search?${params.toString()}`);
   },
 
   /**

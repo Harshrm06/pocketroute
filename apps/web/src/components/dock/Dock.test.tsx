@@ -306,4 +306,57 @@ describe('Dock Component', () => {
 
     expect(screen.queryByTestId('metro-closed-notice')).toBeNull();
   });
+
+  it('debounces place search by 250ms and renders source labels', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        results: [
+          {
+            id: 'pl_vit',
+            name: 'VIT Pune',
+            lat: 18.4636,
+            lng: 73.8682,
+            source: 'local',
+          },
+          {
+            id: 'osm_999',
+            name: 'VIT Hostel Live',
+            lat: 18.464,
+            lng: 73.869,
+            source: 'osm',
+          },
+        ],
+        liveSearch: 'available',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<Dock />);
+
+    const startInput = screen.getByLabelText('Starting Point');
+    fireEvent.change(startInput, { target: { value: 'VIT' } });
+
+    // Immediately after typing, /geo/search should NOT have been called due to 250ms debounce
+    const geoCallsBefore = fetchMock.mock.calls.filter((c) =>
+      String(c[0]).includes('/geo/search'),
+    );
+    expect(geoCallsBefore.length).toBe(0);
+
+    // After debounce interval, searchGeo endpoint is called and source labels are rendered
+    await waitFor(
+      () => {
+        const geoCallsAfter = fetchMock.mock.calls.filter((c) =>
+          String(c[0]).includes('/geo/search'),
+        );
+        expect(geoCallsAfter.length).toBeGreaterThan(0);
+        const sourceLabels = screen.getAllByTestId('search-result-source');
+        expect(sourceLabels.length).toBe(2);
+        expect(sourceLabels[0]?.textContent).toBe('local');
+        expect(sourceLabels[1]?.textContent).toBe('osm');
+      },
+      { timeout: 1000 },
+    );
+  });
 });

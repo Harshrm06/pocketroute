@@ -977,6 +977,84 @@
       "lat": 18.6582,
       "lng": 73.7652,
       "category": "neighborhood"
+    },
+    {
+      "id": "pl_upper_depot",
+      "name": "Upper Indira Nagar Depot",
+      "aliases": ["Upper Depot", "Indira Nagar Depot", "Upper Indira Nagar"],
+      "lat": 18.4604,
+      "lng": 73.8721,
+      "category": "transit",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_bibwewadi",
+      "name": "Bibwewadi",
+      "aliases": ["Bibvewadi", "Bibvewadi Chowk", "Bibwewadi Police Station"],
+      "lat": 18.4752,
+      "lng": 73.8562,
+      "category": "area",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_bharat_jyoti",
+      "name": "Bharat Jyoti",
+      "aliases": [
+        "Bharat Jyoti Bus Stop",
+        "Bharat Jyoti Society",
+        "Bharat Jyoti Bibwewadi"
+      ],
+      "lat": 18.4717,
+      "lng": 73.8636,
+      "category": "transit",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_market_yard",
+      "name": "Market Yard",
+      "aliases": ["Gultekdi Market Yard", "Market Yard Pune", "Gultekdi"],
+      "lat": 18.4878,
+      "lng": 73.8575,
+      "category": "landmark",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_collector_kacheri",
+      "name": "Collector Kacheri",
+      "aliases": [
+        "Collector Office",
+        "Pune Collector Office",
+        "District Collectorate"
+      ],
+      "lat": 18.5245,
+      "lng": 73.8721,
+      "category": "landmark",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_vit_pune",
+      "name": "Vishwakarma Institute of Technology",
+      "aliases": ["VIT", "VIT Pune", "VIT College", "VIT Bibwewadi"],
+      "lat": 18.4636,
+      "lng": 73.8682,
+      "category": "education",
+      "verified": false,
+      "notes": "Verified via OSM Nominatim"
+    },
+    {
+      "id": "pl_saswad_road_rural",
+      "name": "Saswad Road Rural Outpost",
+      "aliases": ["Saswad Outpost", "Saswad Road Checkpost"],
+      "lat": null,
+      "lng": null,
+      "category": "transit",
+      "verified": false,
+      "notes": "Unverified coordinates; excluded from routing until verified"
     }
   ]
 }

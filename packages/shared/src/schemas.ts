@@ -471,6 +471,25 @@ export const placesDataSchema = z.object({
 export type PlacesData = z.infer<typeof placesDataSchema>;
 
 /**
+ * Geo search schemas for GET /api/v1/geo/search (PRD Section 23).
+ */
+export const geoSearchResultSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  source: z.enum(['local', 'osm']),
+  transitStopId: z.string().optional(),
+});
+export type GeoSearchResult = z.infer<typeof geoSearchResultSchema>;
+
+export const geoSearchResponseSchema = z.object({
+  results: z.array(geoSearchResultSchema),
+  liveSearch: z.enum(['available', 'unavailable']).optional(),
+});
+export type GeoSearchResponse = z.infer<typeof geoSearchResponseSchema>;
+
+/**
  * System params schema for data/pune/params.json.
  */
 export const paramsDataSchema = z

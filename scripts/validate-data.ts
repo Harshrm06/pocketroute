@@ -77,9 +77,19 @@ const placeSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   aliases: z.array(z.string()),
-  lat: z.number().min(PUNE_BOUNDING_BOX.minLat).max(PUNE_BOUNDING_BOX.maxLat),
-  lng: z.number().min(PUNE_BOUNDING_BOX.minLng).max(PUNE_BOUNDING_BOX.maxLng),
+  lat: z
+    .number()
+    .min(PUNE_BOUNDING_BOX.minLat)
+    .max(PUNE_BOUNDING_BOX.maxLat)
+    .nullable(),
+  lng: z
+    .number()
+    .min(PUNE_BOUNDING_BOX.minLng)
+    .max(PUNE_BOUNDING_BOX.maxLng)
+    .nullable(),
   category: z.string().min(1),
+  verified: z.boolean().optional(),
+  notes: z.string().optional(),
 });
 
 const placesDataSchema = z.object({
@@ -346,10 +356,19 @@ function run(): void {
       }
       placeIdSet.add(pl.id);
 
-      const coordResult = latLngSchema.safeParse({ lat: pl.lat, lng: pl.lng });
-      if (!coordResult.success) {
-        errors.push(
-          `Place [${pl.id}] "${pl.name}" out of bounds: (${pl.lat}, ${pl.lng})`,
+      if (pl.lat !== null && pl.lng !== null) {
+        const coordResult = latLngSchema.safeParse({
+          lat: pl.lat,
+          lng: pl.lng,
+        });
+        if (!coordResult.success) {
+          errors.push(
+            `Place [${pl.id}] "${pl.name}" out of bounds: (${pl.lat}, ${pl.lng})`,
+          );
+        }
+      } else {
+        warnings.push(
+          `Place [${pl.id}] "${pl.name}" coordinates null: excluded from routing until verified`,
         );
       }
     }

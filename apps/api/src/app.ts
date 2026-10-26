@@ -14,7 +14,12 @@ import { planRequestSchema, type ProblemDetail } from '@pocketroute/shared';
 import { planRoutes } from '@pocketroute/engine';
 import { loadPuneDataPack, type PuneDataPack } from './data.js';
 import { PlacesSearchService } from './places.js';
-import { ReverseGeocodingService } from './geo.js';
+import {
+  ReverseGeocodingService,
+  GeoSearchService,
+  geoSearchQuerySchema,
+  type TransitStopRef,
+} from './geo.js';
 
 export interface AppOptions {
   dataDir?: string;
@@ -68,6 +73,44 @@ export async function buildApp(
     options.nominatimUrl,
   );
   const geoService = new ReverseGeocodingService(options.nominatimUrl);
+
+  // Collect transit stops for stop ID resolution in geo search
+  const transitStops: TransitStopRef[] = [];
+  const seenStopIds = new Set<string>();
+
+  for (const line of dataPack.metro.lines) {
+    for (const st of line.stations) {
+      if (!seenStopIds.has(st.id)) {
+        seenStopIds.add(st.id);
+        transitStops.push({
+          id: st.id,
+          name: st.name,
+          lat: st.lat,
+          lng: st.lng,
+        });
+      }
+    }
+  }
+
+  for (const route of dataPack.bus.routes) {
+    for (const st of route.stops) {
+      if (!seenStopIds.has(st.id)) {
+        seenStopIds.add(st.id);
+        transitStops.push({
+          id: st.id,
+          name: st.name,
+          lat: st.lat,
+          lng: st.lng,
+        });
+      }
+    }
+  }
+
+  const geoSearchService = new GeoSearchService(
+    dataPack.places.places,
+    transitStops,
+    options.nominatimUrl,
+  );
 
   const app = fastify({
     bodyLimit: 8192, // 8 KB limit per PRD §9.5
@@ -283,6 +326,30 @@ export async function buildApp(
       const lat = Number(latStr);
       const lng = Number(lngStr);
       const result = await geoService.reverse(lat, lng);
+      return reply.status(200).send(result);
+    });
+
+    // GET /api/v1/geo/search?q=&limit= (PRD Section 23 & Step 4)
+    v1.get<{
+      Querystring: { q?: string; limit?: string };
+    }>('/geo/search', async (req, reply) => {
+      const parseResult = geoSearchQuerySchema.safeParse(req.query);
+      if (!parseResult.success) {
+        const invalidParams = parseResult.error.issues.map((issue) => ({
+          name: issue.path.join('.') || 'query',
+          reason: issue.message,
+        }));
+        return reply.status(400).send({
+          type: 'https://pocketroute.example/errors/validation-error',
+          title: 'Validation Error',
+          status: 400,
+          detail: 'Invalid query parameters for geo search.',
+          invalidParams,
+        });
+      }
+
+      const { q, limit } = parseResult.data;
+      const result = await geoSearchService.search(q, limit);
       return reply.status(200).send(result);
     });
 

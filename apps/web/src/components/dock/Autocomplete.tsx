@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { StopPoint } from '@pocketroute/shared';
-import { api, type PlaceSearchResult } from '../../lib/api.js';
+import { api, type GeoSearchResult } from '../../lib/api.js';
 import { usePlanStore } from '../../store/plan.js';
 import { MapPin, Navigation, Search, Star, X } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
   isStart = false,
 }) => {
   const [query, setQuery] = useState<string>(value ? value.name : '');
-  const [results, setResults] = useState<PlaceSearchResult[]>([]);
+  const [results, setResults] = useState<GeoSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
@@ -62,7 +62,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 320 ms debounced autocomplete search (PRD §14.5)
+  // 250 ms debounced autocomplete search (Step 4e)
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
     setQuery(text);
@@ -86,19 +86,18 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
     setIsLoading(true);
     debounceTimerRef.current = setTimeout(async () => {
       try {
-        const data = await api.searchPlaces(text.trim(), 8);
-        setResults(data);
+        const data = await api.searchGeo(text.trim(), 8);
+        setResults(data.results || []);
         setIsOpen(true);
       } catch {
         // Fall back to matching recent places
-        const localMatches = recentPlaces
+        const localMatches: GeoSearchResult[] = recentPlaces
           .filter((p) => p.name.toLowerCase().includes(text.toLowerCase()))
           .map((p) => ({
             id: p.name,
             name: p.name,
             lat: p.lat,
             lng: p.lng,
-            category: 'Recent',
             source: 'local' as const,
           }));
         setResults(localMatches);
@@ -106,7 +105,7 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
       } finally {
         setIsLoading(false);
       }
-    }, 320); // 320 ms debounce per PRD §14.5
+    }, 250); // 250 ms debounce per Step 4e
   };
 
   const handleSelectPlace = (place: {
@@ -174,6 +173,8 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
         name: p.name,
         lat: p.lat,
         lng: p.lng,
+        source: undefined as 'local' | 'osm' | undefined,
+        transitStopId: undefined as string | undefined,
         isRecent: true,
       }));
     }
@@ -187,6 +188,8 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
         name: item.name,
         lat: item.lat,
         lng: item.lng,
+        source: item.source,
+        transitStopId: item.transitStopId,
         isRecent,
       };
     });
@@ -356,11 +359,25 @@ export const Autocomplete: React.FC<AutocompleteProps> = ({
                       <span className="truncate">{item.name}</span>
                     </div>
 
-                    {item.isRecent && (
-                      <span className="text-[10px] font-mono text-ink-muted shrink-0">
-                        Recent
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {item.source && (
+                        <span
+                          data-testid="search-result-source"
+                          className={`text-[9px] uppercase font-mono px-1 py-0.5 rounded font-semibold ${
+                            item.source === 'osm'
+                              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
+                          }`}
+                        >
+                          {item.source}
+                        </span>
+                      )}
+                      {item.isRecent && (
+                        <span className="text-[10px] font-mono text-ink-muted shrink-0">
+                          Recent
+                        </span>
+                      )}
+                    </div>
                   </button>
                 );
               })}
