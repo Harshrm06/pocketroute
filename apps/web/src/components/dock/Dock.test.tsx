@@ -359,4 +359,42 @@ describe('Dock Component', () => {
       { timeout: 1000 },
     );
   });
+
+  it('selects a non-stop custom point from search results and passes coordinates to plan store', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({
+        results: [
+          {
+            id: 'pl_vit_custom',
+            name: 'VIT College Gate',
+            lat: 18.4636,
+            lng: 73.8682,
+            source: 'local',
+          },
+        ],
+        liveSearch: 'available',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<Dock />);
+
+    const startInput = screen.getByLabelText('Starting Point');
+    fireEvent.change(startInput, { target: { value: 'VIT' } });
+
+    await waitFor(() => {
+      expect(screen.getByText('VIT College Gate')).toBeDefined();
+    });
+
+    const optionBtn = screen.getByRole('option', { name: /VIT College Gate/i });
+    fireEvent.click(optionBtn);
+
+    const currentOrigin = usePlanStore.getState().origin;
+    expect(currentOrigin).not.toBeNull();
+    expect(currentOrigin?.name).toBe('VIT College Gate');
+    expect(currentOrigin?.lat).toBe(18.4636);
+    expect(currentOrigin?.lng).toBe(73.8682);
+  });
 });
