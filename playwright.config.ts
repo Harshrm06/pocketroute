@@ -14,13 +14,13 @@ export default defineConfig({
       command: 'pnpm --filter @pocketroute/api dev',
       url: 'http://localhost:8080/api/v1/health',
       reuseExistingServer: !process.env.CI,
-      timeout: 30000,
+      timeout: 60000,
     },
     {
       command: 'pnpm --filter @pocketroute/web dev --port 5173',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
-      timeout: 30000,
+      timeout: 60000,
     },
   ],
   projects: [

@@ -41,6 +41,18 @@ export interface MapViewHandle {
   setRoute: (
     routeSet: Route | Leg[] | PlanRoutes | null,
     selectedLegIndex?: number,
+    allRoutes?: {
+      smart?: Route | null;
+      fastest?: Route | null;
+      cheapest?: Route | null;
+    } | null,
+  ) => void;
+
+  /**
+   * Sets commuter marker position and mode during live simulation (PRD §22.4).
+   */
+  setSimulatedCommuter?: (
+    point: { lat: number; lng: number; mode: string } | null,
   ) => void;
 
   /**
@@ -51,8 +63,20 @@ export interface MapViewHandle {
 
 export interface MapViewProps {
   initialRoute?: Route | Leg[] | PlanRoutes | null;
+  allRoutes?: {
+    smart?: Route | null;
+    fastest?: Route | null;
+    cheapest?: Route | null;
+  } | null;
   selectedLegIndex?: number;
   onLegClick?: (legIndex: number, leg: Leg) => void;
   className?: string;
   styleUrl?: string;
+  onMapClick?: (point: { lat: number; lng: number }) => void;
+  onMarkerDragEnd?: (
+    type: 'origin' | 'destination',
+    point: { lat: number; lng: number },
+  ) => void;
+  userLocation?: { lat: number; lng: number } | null;
+  simulatedCommuter?: { lat: number; lng: number; mode: string } | null;
 }

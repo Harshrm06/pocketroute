@@ -51,9 +51,9 @@ export const App: React.FC = () => {
   // Update map when active route changes
   useEffect(() => {
     if (mapRef.current && activeRoute) {
-      mapRef.current.setRoute(activeRoute, selectedLegIdx);
+      mapRef.current.setRoute(activeRoute, selectedLegIdx, result?.routes);
     }
-  }, [activeRoute, selectedLegIdx]);
+  }, [activeRoute, selectedLegIdx, result?.routes]);
 
   const navigateTo = (path: string) => {
     if (typeof window !== 'undefined') {
@@ -81,7 +81,7 @@ export const App: React.FC = () => {
   const handleSelectLeg = (idx: number, leg: Leg) => {
     setSelectedLegIdx(idx);
     if (mapRef.current) {
-      mapRef.current.setRoute(activeRoute, idx);
+      mapRef.current.setRoute(activeRoute, idx, result?.routes);
 
       // Fit bounds to the selected leg (PRD §10.4: 900 ms flyTo)
       const lats = [leg.from.lat, leg.to.lat];
@@ -112,10 +112,32 @@ export const App: React.FC = () => {
         <MapView
           ref={mapRef}
           initialRoute={activeRoute}
+          allRoutes={result?.routes}
           selectedLegIndex={selectedLegIdx}
           onLegClick={(idx, leg) => handleSelectLeg(idx, leg)}
         />
       </ErrorBoundary>
+
+      {/* 1B. Map Safe Zone Overlay Layer (PRD §22.1a) */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[25] flex flex-col justify-start overflow-hidden safe-area-inset"
+        aria-hidden="true"
+      >
+        {/* Desktop: safe offset by dock 380px + 16px buffer = 396px */}
+        <div className="hidden lg:flex pl-[396px] pt-20 pr-4 gap-3 pointer-events-none">
+          <div
+            id="desktop-map-overlay-zone"
+            className="flex items-center gap-2 pointer-events-none"
+          />
+        </div>
+        {/* Tablet: safe offset by dock 360px + 16px buffer = 376px */}
+        <div className="hidden sm:flex lg:hidden pl-[376px] pt-20 pr-4 gap-3 pointer-events-none">
+          <div
+            id="tablet-map-overlay-zone"
+            className="flex items-center gap-2 pointer-events-none"
+          />
+        </div>
+      </div>
 
       {/* Top Header Navigation (Shared across viewports) */}
       <header

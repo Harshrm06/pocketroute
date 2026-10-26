@@ -48,6 +48,8 @@ const DASH_FRAMES: number[][] = [
   [3.5, 2, 0.5, 2],
 ];
 
+import { getPointAtArcLength, haversineMeters } from './arc-length.js';
+
 function extractLegs(
   routeSet: Route | Leg[] | PlanRoutes | null | undefined,
 ): Leg[] {
@@ -59,6 +61,20 @@ function extractLegs(
     if (routeSet.fastest && routeSet.fastest.legs) return routeSet.fastest.legs;
   }
   return [];
+}
+
+function extractCoordinatesFromLegs(legs: Leg[]): [number, number][] {
+  const coords: [number, number][] = [];
+  legs.forEach((leg) => {
+    if (leg.geometry && Array.isArray(leg.geometry.coordinates)) {
+      leg.geometry.coordinates.forEach((c) => {
+        if (typeof c[0] === 'number' && typeof c[1] === 'number') {
+          coords.push([c[0], c[1]]);
+        }
+      });
+    }
+  });
+  return coords;
 }
 
 function getModeColor(leg: Leg): string {
@@ -77,18 +93,26 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
   (
     {
       initialRoute,
+      allRoutes,
       selectedLegIndex,
       onLegClick,
       className = '',
       styleUrl = DEFAULT_STYLE_URL,
+      onMapClick,
+      onMarkerDragEnd,
+      userLocation,
+      simulatedCommuter,
     },
     ref,
   ) => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<MapLibreMap | null>(null);
     const markersRef = useRef<Marker[]>([]);
+    const userLocationMarkerRef = useRef<Marker | null>(null);
+    const commuterMarkerRef = useRef<Marker | null>(null);
     const animationFrameRef = useRef<number | null>(null);
     const routeLegsRef = useRef<Leg[]>(extractLegs(initialRoute));
+    const allRoutesRef = useRef<MapViewProps['allRoutes']>(allRoutes);
     const selectedIndexRef = useRef<number | undefined>(selectedLegIndex);
 
     // Track reduced motion preference
@@ -97,6 +121,11 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
         ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
         : false,
     );
+
+    // Sync allRoutes ref
+    useEffect(() => {
+      allRoutesRef.current = allRoutes;
+    }, [allRoutes]);
 
     // Creates GeoJSON FeatureCollection for route legs
     const buildGeoJson = (
@@ -135,8 +164,12 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       markersRef.current = [];
     };
 
-    // Adds custom HTML pill markers (PRD §10.4, §14.7)
-    const renderMarkers = (map: MapLibreMap, legs: Leg[]) => {
+    // Adds custom HTML pill markers & non-colliding callouts (PRD §10.4, §14.7, §22.1)
+    const renderMarkers = (
+      map: MapLibreMap,
+      legs: Leg[],
+      routesMap?: MapViewProps['allRoutes'],
+    ) => {
       clearMarkers();
       if (legs.length === 0) return;
 
@@ -145,108 +178,263 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
 
       if (!firstLeg || !lastLeg) return;
 
-      // 1. Origin Pill Marker (Ink background, white text)
+      // 1. Start Marker: Emerald pill, anchored bottom-left, z-index 400 (PRD §22.1b)
       const originEl = document.createElement('div');
       originEl.className =
-        'origin-marker select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+        'start-marker marker-tag select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+      originEl.style.zIndex = '400';
       originEl.setAttribute('role', 'button');
-      originEl.setAttribute('aria-label', `Origin: ${firstLeg.from.name}`);
+      originEl.setAttribute('tabindex', '0');
+      originEl.setAttribute('data-testid', 'start-marker');
+      originEl.setAttribute('aria-label', `Start: ${firstLeg.from.name}`);
       originEl.innerHTML = `
-        <div class="px-3 py-1.5 rounded-pill bg-ink text-white font-sans text-xs font-semibold shadow-e2 border border-white/20 flex items-center gap-1.5 whitespace-nowrap">
+        <div class="marker-pill px-2.5 sm:px-3 py-1.5 rounded-pill bg-[#059669] text-white font-sans text-xs font-semibold shadow-e2 border border-white/20 flex items-center gap-1.5 whitespace-nowrap">
           <span class="w-2 h-2 rounded-full bg-white shrink-0"></span>
-          <span class="max-w-[120px] md:max-w-[180px] truncate">${firstLeg.from.name}</span>
-          <span class="font-mono text-[11px] opacity-80 shrink-0">${firstLeg.departAt}</span>
+          <span class="marker-full-text max-w-[70px] sm:max-w-[120px] md:max-w-[180px] truncate">Start: ${firstLeg.from.name}</span>
+          <span class="marker-compact-icon hidden font-bold text-[10px]">Start</span>
+          <span class="marker-full-text font-mono text-[11px] opacity-80 shrink-0">${firstLeg.departAt}</span>
         </div>
       `;
-      const originMarker = new Marker({ element: originEl, anchor: 'bottom' })
+      const originMarker = new Marker({
+        element: originEl,
+        anchor: 'bottom-left',
+        offset: [0, -36],
+        draggable: true,
+      })
         .setLngLat([firstLeg.from.lng, firstLeg.from.lat])
         .addTo(map);
+
+      originMarker.on('dragend', () => {
+        const lngLat = originMarker.getLngLat();
+        onMarkerDragEnd?.('origin', { lat: lngLat.lat, lng: lngLat.lng });
+      });
       markersRef.current.push(originMarker);
 
       // 2. Intermediate Leg Transition Markers & Stops
       legs.forEach((leg, idx) => {
-        // For estimated geometry legs, add a small "estimated path" pill label at midpoint (PRD §10.4, §10.3)
-        if (
-          leg.geometryQuality === 'estimated' &&
-          leg.geometry.coordinates.length > 0
-        ) {
-          const midCoords =
-            leg.geometry.coordinates[
-              Math.floor(leg.geometry.coordinates.length / 2)
-            ];
-          if (
-            midCoords &&
-            midCoords[0] !== undefined &&
-            midCoords[1] !== undefined
-          ) {
-            const estEl = document.createElement('div');
-            estEl.className = 'select-none pointer-events-none';
-            estEl.innerHTML = `
-              <div class="px-2 py-0.5 rounded-pill bg-surface-solid border border-border shadow-e1 text-[10px] font-mono font-medium text-warning flex items-center gap-1 whitespace-nowrap">
-                <span class="w-1.5 h-1.5 rounded-full bg-warning shrink-0"></span>
-                <span>estimated path</span>
-              </div>
-            `;
-            const estMarker = new Marker({ element: estEl, anchor: 'center' })
-              .setLngLat([midCoords[0], midCoords[1]])
-              .addTo(map);
-            markersRef.current.push(estMarker);
-          }
-        }
-
         // Add intermediate interchange chip between legs
         if (idx < legs.length - 1) {
           const nextLeg = legs[idx + 1];
           const modeColor = getModeColor(leg);
           const stopEl = document.createElement('div');
           stopEl.className =
-            'stop-marker select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+            'stop-marker marker-tag select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+          stopEl.style.zIndex = '390';
           stopEl.innerHTML = `
-            <div class="px-2 py-0.5 rounded-pill bg-surface-solid text-ink font-sans text-[11px] font-medium shadow-e1 border border-border flex items-center gap-1.5 whitespace-nowrap">
+            <div class="marker-pill px-2 py-0.5 rounded-pill bg-surface-solid text-ink font-sans text-[11px] font-medium shadow-e1 border border-border flex items-center gap-1.5 whitespace-nowrap">
               <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${modeColor}"></span>
-              <span class="max-w-[100px] truncate">${leg.to.name}</span>
-              <span class="font-mono text-[10px] text-ink-muted shrink-0">${nextLeg ? nextLeg.departAt : leg.arriveAt}</span>
+              <span class="marker-full-text max-w-[70px] sm:max-w-[100px] truncate">${leg.to.name}</span>
+              <span class="marker-compact-icon hidden text-[9px] font-semibold">${leg.to.name.slice(0, 3)}</span>
+              <span class="marker-full-text font-mono text-[10px] text-ink-muted shrink-0">${nextLeg ? nextLeg.departAt : leg.arriveAt}</span>
             </div>
           `;
-          const stopMarker = new Marker({ element: stopEl, anchor: 'bottom' })
+          const stopMarker = new Marker({
+            element: stopEl,
+            anchor: 'bottom',
+            offset: [0, -10],
+          })
             .setLngLat([leg.to.lng, leg.to.lat])
             .addTo(map);
           markersRef.current.push(stopMarker);
         }
       });
 
-      // 3. Destination Pill Marker (Mode-neutral slate background, white text)
+      // 3. Destination Marker: Coral pill, anchored bottom-right, z-index 401 (PRD §22.1b)
       const destEl = document.createElement('div');
       destEl.className =
-        'dest-marker select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+        'dest-marker marker-tag select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+      destEl.style.zIndex = '401';
       destEl.setAttribute('role', 'button');
-      destEl.setAttribute('aria-label', `Destination: ${lastLeg.to.name}`);
+      destEl.setAttribute('tabindex', '0');
+      destEl.setAttribute('data-testid', 'dest-marker');
+      destEl.setAttribute('aria-label', `Dest: ${lastLeg.to.name}`);
       destEl.innerHTML = `
-        <div class="px-3 py-1.5 rounded-pill bg-slate-700 text-white font-sans text-xs font-semibold shadow-e2 border border-white/20 flex items-center gap-1.5 whitespace-nowrap">
+        <div class="marker-pill px-2.5 sm:px-3 py-1.5 rounded-pill bg-[#f43f5e] text-white font-sans text-xs font-semibold shadow-e2 border border-white/20 flex items-center gap-1.5 whitespace-nowrap">
           <span class="w-2 h-2 rounded-sm bg-white shrink-0"></span>
-          <span class="max-w-[120px] md:max-w-[180px] truncate">${lastLeg.to.name}</span>
-          <span class="font-mono text-[11px] opacity-80 shrink-0">${lastLeg.arriveAt}</span>
+          <span class="marker-full-text max-w-[70px] sm:max-w-[120px] md:max-w-[180px] truncate">Dest: ${lastLeg.to.name}</span>
+          <span class="marker-compact-icon hidden font-bold text-[10px]">Dest</span>
+          <span class="marker-full-text font-mono text-[11px] opacity-80 shrink-0">${lastLeg.arriveAt}</span>
         </div>
       `;
-      const destMarker = new Marker({ element: destEl, anchor: 'bottom' })
+      const destMarker = new Marker({
+        element: destEl,
+        anchor: 'bottom-right',
+        offset: [0, -36],
+        draggable: true,
+      })
         .setLngLat([lastLeg.to.lng, lastLeg.to.lat])
         .addTo(map);
+
+      destMarker.on('dragend', () => {
+        const lngLat = destMarker.getLngLat();
+        onMarkerDragEnd?.('destination', { lat: lngLat.lat, lng: lngLat.lng });
+      });
       markersRef.current.push(destMarker);
+
+      // 4. Route Callouts based on cumulative Haversine arc length (PRD §22.1c)
+      // Check if multiple comparison routes are present
+      const routes = routesMap ?? allRoutesRef.current;
+      const hasMultiple =
+        routes &&
+        routes.fastest &&
+        routes.smart &&
+        routes.cheapest &&
+        routes.fastest !== routes.cheapest;
+
+      if (hasMultiple && routes.fastest && routes.smart && routes.cheapest) {
+        // Multi-route callouts: 35% Fastest, 55% Smart, 70% Cheapest, alternating perpendicular sides
+        const routeConfigs = [
+          {
+            key: 'fastest',
+            label: 'Fastest',
+            route: routes.fastest,
+            ratio: 0.35,
+            side: 'right' as const,
+            color: '#4f46e5',
+            testId: 'route-callout-fastest',
+          },
+          {
+            key: 'smart',
+            label: 'Smart Budget',
+            route: routes.smart,
+            ratio: 0.55,
+            side: 'left' as const,
+            color: '#059669',
+            testId: 'route-callout-smart',
+          },
+          {
+            key: 'cheapest',
+            label: 'Cheapest',
+            route: routes.cheapest,
+            ratio: 0.7,
+            side: 'right' as const,
+            color: '#d97706',
+            testId: 'route-callout-cheapest',
+          },
+        ];
+
+        routeConfigs.forEach((cfg) => {
+          const coords = extractCoordinatesFromLegs(cfg.route.legs);
+          let safeRatio = cfg.ratio;
+
+          // Prevent callouts from anchoring too close to origin or destination
+          if (coords.length > 1) {
+            const firstCoord = coords[0]!;
+            const lastCoord = coords[coords.length - 1]!;
+            // Test candidate ratio
+            const candidate = getPointAtArcLength(
+              coords,
+              safeRatio,
+              16,
+              cfg.side,
+            );
+            if (candidate) {
+              const dStart = haversineMeters(
+                candidate.point[1],
+                candidate.point[0],
+                firstCoord[1],
+                firstCoord[0],
+              );
+              const dEnd = haversineMeters(
+                candidate.point[1],
+                candidate.point[0],
+                lastCoord[1],
+                lastCoord[0],
+              );
+              if (dEnd < 600) {
+                safeRatio = Math.max(0.25, safeRatio - 0.12);
+              } else if (dStart < 600) {
+                safeRatio = Math.min(0.75, safeRatio + 0.12);
+              }
+            }
+          }
+
+          const arcPoint = getPointAtArcLength(coords, safeRatio, 16, cfg.side);
+          if (arcPoint) {
+            const calloutEl = document.createElement('div');
+            calloutEl.className =
+              'route-callout marker-tag select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+            calloutEl.style.zIndex = '450';
+            calloutEl.setAttribute('data-testid', cfg.testId);
+            calloutEl.innerHTML = `
+              <div class="marker-pill px-2.5 py-1 rounded-pill bg-surface-solid text-ink font-sans text-xs font-semibold shadow-e2 border border-border flex items-center gap-1.5 whitespace-nowrap">
+                <span class="w-2 h-2 rounded-full shrink-0" style="background-color: ${cfg.color}"></span>
+                <span class="marker-full-text">${cfg.label} • ${Math.round(cfg.route.durationMin)}m • ₹${cfg.route.totalFareINR}</span>
+                <span class="marker-compact-icon hidden text-[10px]">${cfg.label.slice(0, 1)}</span>
+              </div>
+            `;
+            const calloutMarker = new Marker({
+              element: calloutEl,
+              anchor: 'center',
+              offset: arcPoint.perpendicularOffsetPx,
+            })
+              .setLngLat(arcPoint.point)
+              .addTo(map);
+            markersRef.current.push(calloutMarker);
+          }
+        });
+      } else {
+        // Single visible route callout placed at strictly 50% arc length (PRD §22.1c)
+        const coords = extractCoordinatesFromLegs(legs);
+        const arcPoint = getPointAtArcLength(coords, 0.5, 14, 'left');
+        if (arcPoint) {
+          const hasEstimated = legs.some(
+            (l) => l.geometryQuality === 'estimated',
+          );
+          const totalFare = legs.reduce((acc, l) => acc + (l.fareINR || 0), 0);
+          const totalMin = Math.round(
+            legs.reduce((acc, l) => acc + (l.durationMin || 0), 0),
+          );
+
+          const calloutEl = document.createElement('div');
+          calloutEl.className =
+            'route-callout marker-tag select-none pointer-events-auto cursor-pointer transition-transform duration-150 hover:scale-105';
+          calloutEl.style.zIndex = '450';
+          calloutEl.setAttribute('data-testid', 'route-callout');
+          calloutEl.innerHTML = `
+            <div class="marker-pill px-2.5 py-1 rounded-pill bg-surface-solid text-ink font-sans text-xs font-semibold shadow-e2 border border-border flex items-center gap-1.5 whitespace-nowrap">
+              <span class="w-2 h-2 rounded-full shrink-0 ${hasEstimated ? 'bg-warning' : 'bg-success'}"></span>
+              <span class="marker-full-text">${hasEstimated ? 'Estimated Path' : 'Optimal Route'} • ${totalMin}m • ₹${totalFare}</span>
+              <span class="marker-compact-icon hidden text-[10px] font-bold">●</span>
+            </div>
+          `;
+          const calloutMarker = new Marker({
+            element: calloutEl,
+            anchor: 'center',
+            offset: arcPoint.perpendicularOffsetPx,
+          })
+            .setLngLat(arcPoint.point)
+            .addTo(map);
+          markersRef.current.push(calloutMarker);
+        }
+      }
     };
 
     // Updates route sources and markers
-    const applyRoute = (legs: Leg[], selectedIdx?: number) => {
+    const applyRoute = (
+      legs: Leg[],
+      selectedIdx?: number,
+      routesMap?: MapViewProps['allRoutes'],
+    ) => {
       routeLegsRef.current = legs;
       selectedIndexRef.current = selectedIdx;
-      const map = mapRef.current;
-      if (!map || !map.isStyleLoaded()) return;
-
-      const source = map.getSource('route-source') as GeoJSONSource | undefined;
-      if (source) {
-        source.setData(buildGeoJson(legs, selectedIdx));
+      if (routesMap !== undefined) {
+        allRoutesRef.current = routesMap;
       }
+      const map = mapRef.current;
+      if (!map) return;
 
-      renderMarkers(map, legs);
+      // Render custom HTML markers immediately without waiting for vector style load
+      renderMarkers(map, legs, allRoutesRef.current);
+
+      if (map.isStyleLoaded()) {
+        const source = map.getSource('route-source') as
+          | GeoJSONSource
+          | undefined;
+        if (source) {
+          source.setData(buildGeoJson(legs, selectedIdx));
+        }
+      }
     };
 
     // Setup MapLibre layers matching PRD §10.4 and §14.7
@@ -642,11 +830,15 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       setRoute: (
         routeSet: Route | Leg[] | PlanRoutes | null,
         selectedLegIdx?: number,
+        allRoutesInput?: MapViewProps['allRoutes'],
       ) => {
         const legs = extractLegs(routeSet);
-        applyRoute(legs, selectedLegIdx);
+        if (allRoutesInput !== undefined) {
+          allRoutesRef.current = allRoutesInput;
+        }
+        applyRoute(legs, selectedLegIdx, allRoutesRef.current);
 
-        // Auto-fit to route if legs exist
+        // Auto-fit to route if legs exist with layout safe zone padding (PRD §22.1)
         if (legs.length > 0 && mapRef.current) {
           const lats = legs.flatMap((l) => [l.from.lat, l.to.lat]);
           const lngs = legs.flatMap((l) => [l.from.lng, l.to.lng]);
@@ -656,13 +848,51 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
           const maxLng = Math.max(...lngs);
 
           const duration = prefersReducedMotionRef.current ? 0 : 900;
+          const isDesktop =
+            typeof window !== 'undefined' && window.innerWidth >= 1024;
+          const isTablet =
+            typeof window !== 'undefined' &&
+            window.innerWidth >= 640 &&
+            window.innerWidth < 1024;
+          const padding = isDesktop
+            ? { top: 96, bottom: 80, left: 420, right: 460 }
+            : isTablet
+              ? { top: 96, bottom: 80, left: 390, right: 60 }
+              : { top: 200, bottom: 220, left: 32, right: 32 };
+
           mapRef.current.fitBounds(
             [
               [minLng, minLat],
               [maxLng, maxLat],
             ],
-            { padding: 80, duration },
+            { padding, duration },
           );
+        }
+      },
+
+      setSimulatedCommuter: (point) => {
+        const map = mapRef.current;
+        if (!map) return;
+        if (commuterMarkerRef.current) {
+          commuterMarkerRef.current.remove();
+          commuterMarkerRef.current = null;
+        }
+        if (point) {
+          const el = document.createElement('div');
+          el.className =
+            'commuter-marker select-none pointer-events-none transition-transform duration-100';
+          el.style.zIndex = '460';
+          el.setAttribute('data-testid', 'simulated-commuter-marker');
+          el.innerHTML = `
+            <div class="px-2 py-1 rounded-pill bg-[#0f172a] text-white border border-white/40 shadow-e3 flex items-center gap-1.5 text-xs font-bold whitespace-nowrap">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+              <span>${point.mode}</span>
+            </div>
+          `;
+          const marker = new Marker({ element: el, anchor: 'center' })
+            .setLngLat([point.lng, point.lat])
+            .addTo(map);
+          commuterMarkerRef.current = marker;
         }
       },
 
@@ -685,9 +915,26 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
 
       mapRef.current = map;
 
+      // Zoom listener for compact marker tags when zoom < 12 (PRD §22.1c)
+      const handleZoom = () => {
+        if (!mapContainerRef.current) return;
+        if (map.getZoom() < 12) {
+          mapContainerRef.current.classList.add('map-zoomed-out');
+        } else {
+          mapContainerRef.current.classList.remove('map-zoomed-out');
+        }
+      };
+      map.on('zoom', handleZoom);
+
+      // Map click-to-pin listener (PRD §22.3)
+      map.on('click', (e) => {
+        onMapClick?.({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+      });
+
       map.on('load', () => {
         initRouteLayers(map);
         startWalkAnimation(map);
+        handleZoom();
 
         // If initialRoute had legs, fit map to them
         const initialLegs = routeLegsRef.current;
@@ -699,12 +946,18 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
           const minLng = Math.min(...lngs);
           const maxLng = Math.max(...lngs);
 
+          const isDesktop =
+            typeof window !== 'undefined' && window.innerWidth >= 1024;
+          const padding = isDesktop
+            ? { top: 96, bottom: 80, left: 420, right: 460 }
+            : { top: 200, bottom: 220, left: 32, right: 32 };
+
           map.fitBounds(
             [
               [minLng, minLat],
               [maxLng, maxLat],
             ],
-            { padding: 72, duration: 0 },
+            { padding, duration: 0 },
           );
         }
       });
@@ -713,10 +966,74 @@ export const MapLibreInternal = React.forwardRef<MapViewHandle, MapViewProps>(
       return () => {
         stopWalkAnimation();
         clearMarkers();
+        if (userLocationMarkerRef.current) {
+          userLocationMarkerRef.current.remove();
+          userLocationMarkerRef.current = null;
+        }
+        if (commuterMarkerRef.current) {
+          commuterMarkerRef.current.remove();
+          commuterMarkerRef.current = null;
+        }
         map.remove();
         mapRef.current = null;
       };
     }, [styleUrl]);
+
+    // Handle updates to userLocation GPS marker (PRD §22.2)
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+      }
+      if (
+        userLocation &&
+        typeof userLocation.lat === 'number' &&
+        typeof userLocation.lng === 'number'
+      ) {
+        const el = document.createElement('div');
+        el.className =
+          'user-gps-marker select-none pointer-events-none relative flex items-center justify-center';
+        el.style.zIndex = '420';
+        el.setAttribute('data-testid', 'gps-user-marker');
+        el.innerHTML = `
+          <div class="absolute w-8 h-8 rounded-full bg-blue-500/30 gps-pulse-ring"></div>
+          <div class="w-3.5 h-3.5 rounded-full bg-blue-600 border-2 border-white shadow-md"></div>
+        `;
+        const marker = new Marker({ element: el, anchor: 'center' })
+          .setLngLat([userLocation.lng, userLocation.lat])
+          .addTo(map);
+        userLocationMarkerRef.current = marker;
+      }
+    }, [userLocation]);
+
+    // Handle updates to simulatedCommuter marker (PRD §22.4)
+    useEffect(() => {
+      const map = mapRef.current;
+      if (!map) return;
+      if (commuterMarkerRef.current) {
+        commuterMarkerRef.current.remove();
+        commuterMarkerRef.current = null;
+      }
+      if (simulatedCommuter) {
+        const el = document.createElement('div');
+        el.className =
+          'commuter-marker select-none pointer-events-none transition-transform duration-100';
+        el.style.zIndex = '460';
+        el.setAttribute('data-testid', 'simulated-commuter-marker');
+        el.innerHTML = `
+          <div class="px-2 py-1 rounded-pill bg-[#0f172a] text-white border border-white/40 shadow-e3 flex items-center gap-1.5 text-xs font-bold whitespace-nowrap">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0"></span>
+            <span>${simulatedCommuter.mode}</span>
+          </div>
+        `;
+        const marker = new Marker({ element: el, anchor: 'center' })
+          .setLngLat([simulatedCommuter.lng, simulatedCommuter.lat])
+          .addTo(map);
+        commuterMarkerRef.current = marker;
+      }
+    }, [simulatedCommuter]);
 
     // Handle updates to selectedLegIndex
     useEffect(() => {

@@ -154,3 +154,58 @@ body {
   padding-left: max(16px, env(safe-area-inset-left));
   padding-right: max(16px, env(safe-area-inset-right));
 }
+
+/* Z-index scale per PRD §22.1 */
+.z-map-base {
+  z-index: 0;
+}
+.z-map-route {
+  z-index: 10;
+}
+.z-map-overlay {
+  z-index: 25;
+}
+.z-dock-results {
+  z-index: 30;
+}
+.z-map-markers {
+  z-index: 400;
+}
+.z-map-callouts {
+  z-index: 450;
+}
+.z-inspector-modal {
+  z-index: 500;
+}
+
+/* Zoom < 12 Collapsible Marker Tags (PRD §22.1) */
+.map-zoomed-out .marker-tag:not(:hover):not(:focus-within) .marker-full-text {
+  display: none !important;
+}
+.map-zoomed-out
+  .marker-tag:not(:hover):not(:focus-within)
+  .marker-compact-icon {
+  display: inline-flex !important;
+}
+.map-zoomed-out .marker-tag:not(:hover):not(:focus-within) .marker-pill {
+  padding: 4px 8px !important;
+}
+
+/* Accuracy ring pulsing animation for GPS (PRD §22.2) */
+@keyframes gps-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 16px rgba(37, 99, 235, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+.gps-pulse-ring {
+  animation: gps-pulse 2s infinite ease-in-out;
+}
