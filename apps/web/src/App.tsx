@@ -8,6 +8,7 @@ import { SettingsPopover } from './components/settings/index.js';
 import { ErrorBoundary, PillButton, Surface } from './components/ui/index.js';
 import { fixtureRoute } from './fixtures/route.js';
 import { usePlanStore } from './store/plan.js';
+import { api } from './lib/api.js';
 import { Moon, Sun } from 'lucide-react';
 import type { Leg, Route } from '@pocketroute/shared';
 
@@ -33,6 +34,11 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const mapRef = useRef<MapViewHandle>(null);
   const inspectorTriggerRef = useRef<HTMLButtonElement>(null);
+  const [pinChoicePoint, setPinChoicePoint] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [pinAddress, setPinAddress] = useState<string>('');
 
   const {
     result,
@@ -40,6 +46,8 @@ export const App: React.FC = () => {
     budgetINR,
     userLocation,
     requestCurrentLocation,
+    setOrigin,
+    setDestination,
   } = usePlanStore();
 
   // Active route: either planned route from store or default fixture route
@@ -107,6 +115,151 @@ export const App: React.FC = () => {
     }
   };
 
+  // Map Click-to-Pin Handler (PRD §22.3)
+  const handleMapClick = async (point: { lat: number; lng: number }) => {
+    const currentOrigin = usePlanStore.getState().origin;
+    const currentDest = usePlanStore.getState().destination;
+
+    if (!currentOrigin) {
+      try {
+        const geo = await api.reverseGeocode(point.lat, point.lng);
+        setOrigin({
+          name:
+            geo.displayName ||
+            `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+          lat: point.lat,
+          lng: point.lng,
+        });
+      } catch {
+        setOrigin({
+          name: `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+          lat: point.lat,
+          lng: point.lng,
+        });
+      }
+      if (currentDest) {
+        await usePlanStore.getState().planRoute();
+      }
+    } else if (!currentDest) {
+      try {
+        const geo = await api.reverseGeocode(point.lat, point.lng);
+        setDestination({
+          name:
+            geo.displayName ||
+            `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+          lat: point.lat,
+          lng: point.lng,
+        });
+      } catch {
+        setDestination({
+          name: `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+          lat: point.lat,
+          lng: point.lng,
+        });
+      }
+      await usePlanStore.getState().planRoute();
+    } else {
+      // Both filled: ask "Set as Start or Destination?"
+      setPinChoicePoint(point);
+      setPinAddress(`(${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`);
+      try {
+        const geo = await api.reverseGeocode(point.lat, point.lng);
+        if (geo.areaName) setPinAddress(geo.areaName);
+      } catch {
+        // Fallback already prepared
+      }
+    }
+  };
+
+  const handleSetPinnedAsStart = async () => {
+    if (!pinChoicePoint) return;
+    const point = pinChoicePoint;
+    setPinChoicePoint(null);
+    try {
+      const geo = await api.reverseGeocode(point.lat, point.lng);
+      setOrigin({
+        name:
+          geo.displayName ||
+          `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      });
+    } catch {
+      setOrigin({
+        name: `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      });
+    }
+    const state = usePlanStore.getState();
+    if (state.origin && state.destination) {
+      await state.planRoute();
+    }
+  };
+
+  const handleSetPinnedAsDestination = async () => {
+    if (!pinChoicePoint) return;
+    const point = pinChoicePoint;
+    setPinChoicePoint(null);
+    try {
+      const geo = await api.reverseGeocode(point.lat, point.lng);
+      setDestination({
+        name:
+          geo.displayName ||
+          `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      });
+    } catch {
+      setDestination({
+        name: `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      });
+    }
+    const state = usePlanStore.getState();
+    if (state.origin && state.destination) {
+      await state.planRoute();
+    }
+  };
+
+  // Draggable Marker Release Handler (PRD §22.3)
+  const handleMarkerDragEnd = async (
+    type: 'origin' | 'destination',
+    point: { lat: number; lng: number },
+  ) => {
+    try {
+      const geo = await api.reverseGeocode(point.lat, point.lng);
+      const updated = {
+        name:
+          geo.displayName ||
+          `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      };
+      if (type === 'origin') {
+        setOrigin(updated);
+      } else {
+        setDestination(updated);
+      }
+    } catch {
+      const fallback = {
+        name: `Location (${point.lat.toFixed(4)}, ${point.lng.toFixed(4)})`,
+        lat: point.lat,
+        lng: point.lng,
+      };
+      if (type === 'origin') {
+        setOrigin(fallback);
+      } else {
+        setDestination(fallback);
+      }
+    }
+    const state = usePlanStore.getState();
+    if (state.origin && state.destination) {
+      await state.planRoute();
+    }
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-canvas">
       {/* 1. Full-screen Interactive Vector Map Layer wrapped in Error Boundary (PRD §10.4 & §16) */}
@@ -123,8 +276,55 @@ export const App: React.FC = () => {
           onLegClick={(idx, leg) => handleSelectLeg(idx, leg)}
           userLocation={userLocation}
           onMyLocationClick={requestCurrentLocation}
+          onMapClick={handleMapClick}
+          onMarkerDragEnd={handleMarkerDragEnd}
         />
       </ErrorBoundary>
+
+      {/* 1C. Map Pin Choice Dialog (PRD §22.3) */}
+      {pinChoicePoint && (
+        <div
+          role="dialog"
+          aria-label="Set point as Start or Destination"
+          data-testid="pin-choice-prompt"
+          className="absolute top-20 left-1/2 -translate-x-1/2 z-[450] bg-surface-solid shadow-e3 border border-border rounded-xl p-4 flex flex-col gap-3 min-w-[280px] max-w-[340px] text-ink animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-ink">
+              Set as Start or Destination?
+            </span>
+            <button
+              type="button"
+              onClick={() => setPinChoicePoint(null)}
+              className="text-ink-muted hover:text-ink text-sm p-1 font-bold cursor-pointer"
+              aria-label="Cancel"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="text-[11px] text-ink-muted truncate">
+            Pinned: <span className="font-medium text-ink">{pinAddress}</span>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              data-testid="set-as-start-btn"
+              onClick={handleSetPinnedAsStart}
+              className="flex-1 py-1.5 px-3 rounded-btn text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm active:scale-95 transition-all cursor-pointer"
+            >
+              Set Start
+            </button>
+            <button
+              type="button"
+              data-testid="set-as-dest-btn"
+              onClick={handleSetPinnedAsDestination}
+              className="flex-1 py-1.5 px-3 rounded-btn text-xs font-medium bg-[#f43f5e] hover:bg-rose-600 text-white shadow-sm active:scale-95 transition-all cursor-pointer"
+            >
+              Set Dest
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 1B. Map Safe Zone Overlay Layer (PRD §22.1a) */}
       <div

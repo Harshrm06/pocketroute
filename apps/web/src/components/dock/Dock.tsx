@@ -34,9 +34,14 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
     departureTime !== 'now',
   );
 
-  const handleSwap = () => {
+  const handleSwap = async () => {
     setIsSwapping((prev) => !prev);
     swapEndpoints();
+    // Re-request route if both endpoints exist (PRD §22.3)
+    const state = usePlanStore.getState();
+    if (state.origin && state.destination) {
+      await state.planRoute();
+    }
   };
 
   const handleDepartureModeToggle = (mode: 'now' | 'custom') => {
@@ -125,7 +130,7 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
             variant="surface"
             size="sm"
             onClick={handleSwap}
-            className={`transition-transform duration-300 ease-in-out ${
+            className={`transition-transform duration-[260ms] ease-in-out motion-reduce:transition-none ${
               isSwapping ? 'rotate-180' : 'rotate-0'
             }`}
           >
