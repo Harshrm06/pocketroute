@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './',
   timeout: 30000,
   fullyParallel: false,
+  workers: 2,
   reporter: 'list',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:5173',
@@ -15,6 +16,9 @@ export default defineConfig({
       url: 'http://localhost:8080/api/v1/health',
       reuseExistingServer: !process.env.CI,
       timeout: 30000,
+      env: {
+        RATE_LIMIT_PER_MIN: '1000',
+      },
     },
     {
       command: 'pnpm --filter @pocketroute/web dev --port 5173',

@@ -281,4 +281,29 @@ describe('Dock Component', () => {
       expect(usePlanStore.getState().status).toBe('error');
     });
   });
+
+  it('displays notice when departure time is between 22:00 and 06:00 (metro closed)', async () => {
+    usePlanStore.setState({
+      departureTime: '22:30',
+    });
+
+    render(<Dock />);
+
+    expect(screen.getByTestId('metro-closed-notice')).toBeDefined();
+    expect(
+      screen.getByText(
+        'Metro is closed at this time. Routed via bus and auto.',
+      ),
+    ).toBeDefined();
+  });
+
+  it('does not display notice when departure time is within metro operating hours (e.g. 17:30)', async () => {
+    usePlanStore.setState({
+      departureTime: '17:30',
+    });
+
+    render(<Dock />);
+
+    expect(screen.queryByTestId('metro-closed-notice')).toBeNull();
+  });
 });

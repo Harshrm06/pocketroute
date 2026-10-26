@@ -167,6 +167,7 @@ function makeAutoEdge(
   toNodeId: string,
   distKm: number,
   fromLine: LineId | 'NONE' = 'AUTO',
+  localHour: number = 12,
 ): Edge {
   const roadKm = distKm * 1.25; // road estimate
   const rideMin = (roadKm / AUTO_SPEED_KM_PER_H) * 60;
@@ -179,13 +180,11 @@ function makeAutoEdge(
     to,
     line: 'AUTO',
     mode: 'AUTO',
-    fareINR: autoFareINR(roadKm, 12), // use noon as default hour
+    fareINR: autoFareINR(roadKm, localHour),
     minTimeMin: totalMin,
     timeAt: (t: number) => {
-      const localHour = Math.floor((((t % 1440) + 1440) % 1440) / 60);
-      const fare = autoFareINR(roadKm, localHour);
-      // We store the worst-case fare; runtime resolves exact fare on reconstruction
-      void fare;
+      const h = Math.floor((((t % 1440) + 1440) % 1440) / 60);
+      void autoFareINR(roadKm, h);
       return t + totalMin;
     },
     meta: {
@@ -384,6 +383,12 @@ export function buildQueryGraph(
     }
   }
 
+  const localHour =
+    options.localHourIST ??
+    (options.depMinutes !== undefined
+      ? Math.floor((((options.depMinutes % 1440) + 1440) % 1440) / 60)
+      : 12);
+
   // ---- O → stop: auto/cab feeder edges ----
   if (options.includeAuto) {
     const autoStops = kNearestInRadius(
@@ -393,7 +398,9 @@ export function buildQueryGraph(
       feederK,
     );
     for (const { stop, distKm } of autoStops) {
-      addEdge(makeAutoEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE'));
+      addEdge(
+        makeAutoEdge(ORIGIN_NODE_ID, stop.nodeId, distKm, 'NONE', localHour),
+      );
     }
   }
 
@@ -418,7 +425,9 @@ export function buildQueryGraph(
       feederK,
     );
     for (const { stop, distKm } of autoStops) {
-      addEdge(makeAutoEdge(stop.nodeId, DEST_NODE_ID, distKm, 'AUTO'));
+      addEdge(
+        makeAutoEdge(stop.nodeId, DEST_NODE_ID, distKm, 'AUTO', localHour),
+      );
     }
   }
 
@@ -444,7 +453,9 @@ export function buildQueryGraph(
 
   // Direct auto
   if (options.includeAuto) {
-    addEdge(makeAutoEdge(ORIGIN_NODE_ID, DEST_NODE_ID, odDistKm, 'NONE'));
+    addEdge(
+      makeAutoEdge(ORIGIN_NODE_ID, DEST_NODE_ID, odDistKm, 'NONE', localHour),
+    );
   }
 
   // Direct cab
@@ -518,6 +529,7 @@ export function buildQueryGraph(
  */
 export interface FirstMileEdgeOptions {
   localHourIST?: number;
+  depMinutes?: number;
   useRoadFactor?: boolean;
 }
 
@@ -574,7 +586,11 @@ export function buildFirstMileEdges(
     }
   }
 
-  const localHour = options?.localHourIST ?? 12;
+  const localHour =
+    options?.localHourIST ??
+    (options?.depMinutes !== undefined
+      ? Math.floor((((options.depMinutes % 1440) + 1440) % 1440) / 60)
+      : 12);
   const edges: Edge[] = [];
 
   for (const { stop, distKm } of nearest3) {

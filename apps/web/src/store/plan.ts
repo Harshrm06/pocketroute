@@ -50,7 +50,19 @@ export interface PlanState {
   isLocating: boolean;
   locationMessage: LocationMessage | null;
 
+  // Operating parameters from /api/v1/params (PRD §22.5)
+  operatingHours: {
+    metro?: {
+      start: string;
+      end: string;
+      startMin: number;
+      endMin: number;
+    };
+  } | null;
+
   // Actions
+  loadParams: () => Promise<void>;
+  isMetroClosed: (departureTimeOverride?: string) => boolean;
   setOrigin: (point: StopPoint | null) => void;
   setDestination: (point: StopPoint | null) => void;
   swapEndpoints: () => void;
@@ -128,6 +140,49 @@ export const usePlanStore = create<PlanState>((set, get) => ({
   userLocation: null,
   isLocating: false,
   locationMessage: null,
+  operatingHours: null,
+
+  loadParams: async () => {
+    try {
+      const data = await api.getParams();
+      if (data?.operatingHours) {
+        set({ operatingHours: data.operatingHours });
+      }
+    } catch {
+      // Fallback: will use defaults from params.json
+    }
+  },
+
+  isMetroClosed: (departureTimeOverride?: string) => {
+    const time = departureTimeOverride ?? get().departureTime;
+    const metro = get().operatingHours?.metro;
+    const startMin = metro?.startMin ?? 360; // 06:00
+    const endMin = metro?.endMin ?? 1320; // 22:00
+
+    let minutes: number;
+    if (time === 'now') {
+      try {
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: 'Asia/Kolkata',
+          hour: 'numeric',
+          minute: 'numeric',
+          hourCycle: 'h23',
+        });
+        const parts = formatter.formatToParts(new Date());
+        const h = Number(parts.find((p) => p.type === 'hour')?.value ?? 0);
+        const m = Number(parts.find((p) => p.type === 'minute')?.value ?? 0);
+        minutes = h * 60 + m;
+      } catch {
+        const d = new Date();
+        minutes = d.getHours() * 60 + d.getMinutes();
+      }
+    } else {
+      const [h, m] = time.split(':').map(Number);
+      minutes = (h ?? 0) * 60 + (m ?? 0);
+    }
+
+    return minutes >= endMin || minutes < startMin;
+  },
 
   setUserLocation: (loc) => set({ userLocation: loc }),
   setIsLocating: (val) => set({ isLocating: val }),

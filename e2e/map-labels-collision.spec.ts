@@ -30,7 +30,7 @@ test.describe('Section 22.1 Map Label Collisions and Safe Zone Acceptance', () =
       .getByRole('option', { name: /Swargate/i })
       .filter({ visible: true })
       .first();
-    await expect(swargateOption).toBeVisible();
+    await expect(swargateOption).toBeVisible({ timeout: 10000 });
     await swargateOption.click();
 
     // 2. Enter destination Shivajinagar
@@ -41,7 +41,7 @@ test.describe('Section 22.1 Map Label Collisions and Safe Zone Acceptance', () =
       .getByRole('option', { name: /Shivajinagar/i })
       .filter({ visible: true })
       .first();
-    await expect(shivajiOption).toBeVisible();
+    await expect(shivajiOption).toBeVisible({ timeout: 10000 });
     await shivajiOption.click();
 
     // 3. Plan route

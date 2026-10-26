@@ -98,7 +98,7 @@ export async function buildApp(
 
   // 4. Register Rate Limit
   const rateLimitMax =
-    options.rateLimitMax ?? Number(process.env.RATE_LIMIT_PER_MIN ?? 30);
+    options.rateLimitMax ?? Number(process.env.RATE_LIMIT_PER_MIN ?? 300);
   const timeWindow = options.rateLimitTimeWindow ?? '1 minute';
 
   await app.register(fastifyRateLimit, {
@@ -297,6 +297,12 @@ export async function buildApp(
       reply.header('ETag', dataPack.networkEtag);
       reply.header('Cache-Control', 'public, max-age=86400');
       return reply.status(200).send(dataPack.networkResponse);
+    });
+
+    // GET /api/v1/params (PRD §22.5)
+    v1.get('/params', async (_req, reply) => {
+      reply.header('Cache-Control', 'public, max-age=86400');
+      return reply.status(200).send(dataPack.params);
     });
 
     // GET /api/v1/health

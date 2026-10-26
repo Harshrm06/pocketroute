@@ -106,6 +106,26 @@ export interface NetworkResponsePayload {
     type: 'metro_station' | 'bus_stop';
     lineId: string;
   }>;
+  operatingHours?: {
+    metro?: {
+      start: string;
+      end: string;
+      startMin: number;
+      endMin: number;
+    };
+  };
+}
+
+export interface ParamsResponsePayload {
+  operatingHours?: {
+    metro?: {
+      start: string;
+      end: string;
+      startMin: number;
+      endMin: number;
+    };
+  };
+  [key: string]: unknown;
 }
 
 export interface HealthResponse {
@@ -183,5 +203,12 @@ export const api = {
    */
   async getHealth(): Promise<HealthResponse> {
     return request<HealthResponse>('/health');
+  },
+
+  /**
+   * Fetches transit parameters (operating hours, speeds, windows).
+   */
+  async getParams(): Promise<ParamsResponsePayload> {
+    return request<ParamsResponsePayload>('/params');
   },
 };

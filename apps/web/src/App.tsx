@@ -146,7 +146,13 @@ export const App: React.FC = () => {
     requestCurrentLocation,
     setOrigin,
     setDestination,
+    loadParams,
   } = usePlanStore();
+
+  // Load transit operating parameters from /api/v1/params
+  useEffect(() => {
+    loadParams();
+  }, [loadParams]);
 
   // Active route: either planned route from store or default fixture route
   const activeRoute: Route = result?.routes[selectedRouteKey] ?? fixtureRoute;

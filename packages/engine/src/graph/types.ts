@@ -203,6 +203,10 @@ export interface QueryGraphOptions {
   feederK?: number;
   /** Max candidate stops to consider near origin/destination. Default 60. */
   maxCandidateStops?: number;
+  /** Query departure time in minutes from midnight IST. */
+  depMinutes?: number;
+  /** Query local hour in IST [0..23]. */
+  localHourIST?: number;
 }
 
 /** All stops in the transit network, flattened for nearest-neighbor queries. */

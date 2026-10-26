@@ -45,6 +45,7 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
     setBudget,
     planRoute,
     budgetINR,
+    isMetroClosed,
   } = usePlanStore();
 
   const [snapPoint, setSnapPoint] = useState<MobileSnapPoint>('half');
@@ -149,6 +150,20 @@ export const ResultsPanel: React.FC<ResultsPanelProps> = ({
                 >
                   Set budget to ₹{infeasible.minimumRequiredFareINR} & re-route
                 </PillButton>
+              </div>
+            )}
+
+            {/* Metro Closed Notice (PRD §22.5) */}
+            {isMetroClosed() && (
+              <div
+                role="note"
+                data-testid="metro-closed-notice"
+                className="p-3 rounded-card bg-amber-500/10 border border-amber-500/30 text-xs text-ink flex items-center gap-2 shrink-0"
+              >
+                <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>
+                  Metro is closed at this time. Routed via bus and auto.
+                </span>
               </div>
             )}
 

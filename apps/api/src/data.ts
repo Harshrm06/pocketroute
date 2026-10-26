@@ -64,6 +64,7 @@ export interface NetworkResponsePayload {
     type: 'metro_station' | 'bus_stop';
     lineId: string;
   }>;
+  operatingHours?: ParamsData['operatingHours'];
 }
 
 /**
@@ -254,6 +255,7 @@ export function loadPuneDataPack(customDataDir?: string): PuneDataPack {
     lines,
     corridors,
     stations,
+    operatingHours: params.operatingHours,
   };
 
   const networkJson = JSON.stringify(networkResponse);

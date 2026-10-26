@@ -13,6 +13,8 @@ import {
   resolveDepartureMinutes,
   theoreticalBounds,
 } from './plan.js';
+import { parseHHmm, metroNextTrain } from './timing/index.js';
+import { autoFareINR } from './pricing/index.js';
 
 // ---------------------------------------------------------------------------
 // Test helpers & fixtures
@@ -315,6 +317,86 @@ describe('packages/engine/src/plan', () => {
       expect(result.metrics.theory.routeA.ops).toBeGreaterThan(0);
       expect(result.metrics.theory.rcspp.ops).toBeGreaterThan(0);
       expect(result.metrics.theory.dense.ops).toBeGreaterThan(0);
+    });
+
+    describe('Time-of-day service rules (PRD Section 22.5)', () => {
+      it('metro closed at 22:30: excludes metro boarding and returns route with zero METRO legs', () => {
+        // 1. Next departure returns null
+        expect(metroNextTrain(parseHHmm('22:30'))).toBeNull();
+
+        // 2. Plan at 22:30 between Swargate and Shivajinagar
+        const result = planRoutes(network, {
+          origin: { lat: 18.5015, lng: 73.8542, label: 'Swargate' },
+          destination: { lat: 18.5303, lng: 73.8488, label: 'Shivajinagar' },
+          departureTime: '22:30',
+          budgetINR: 100,
+        });
+
+        // Verify all routes are feasible via bus, auto, walk and contain zero METRO legs
+        for (const route of [
+          result.routes.fastest,
+          result.routes.cheapest,
+          result.routes.smart,
+        ]) {
+          if (route && route.feasible) {
+            for (const leg of route.legs) {
+              expect(leg.mode).not.toBe('METRO');
+            }
+          }
+        }
+      });
+
+      it('metro open at 21:59: boards the 22:00 train within operating window', () => {
+        const train = metroNextTrain(parseHHmm('21:59'));
+        expect(train).toBe(1320); // 22:00 IST train
+      });
+
+      it('night auto at 00:30 applies +25% surcharge and matches autoFareINR', () => {
+        // At 00:30 (localHour 0), autoFareINR applies +25% night surcharge
+        const distKm = 5;
+        const baseFare = autoFareINR(distKm, 12);
+        const nightFare = autoFareINR(distKm, 0);
+        expect(nightFare).toBeGreaterThan(baseFare);
+
+        const result = planRoutes(network, {
+          origin: { lat: 18.5015, lng: 73.8542, label: 'Swargate' },
+          destination: { lat: 18.5303, lng: 73.8488, label: 'Shivajinagar' },
+          departureTime: '00:30',
+          budgetINR: 200,
+        });
+
+        // If fastest route includes an auto leg, check that its fare matches autoFareINR with localHour = 0
+        const autoLegs = result.routes.fastest.legs.filter(
+          (l) => l.mode === 'AUTO',
+        );
+        for (const leg of autoLegs) {
+          const expectedFare = autoFareINR(leg.distanceKm, 0);
+          expect(leg.fareINR).toBe(expectedFare);
+        }
+      });
+
+      it('night auto at 05:00 does not apply surcharge', () => {
+        // At 05:00 (localHour 5), night surcharge window [0, 5) has ended
+        const distKm = 5;
+        const dayFare = autoFareINR(distKm, 12);
+        const fiveAmFare = autoFareINR(distKm, 5);
+        expect(fiveAmFare).toBe(dayFare);
+
+        const result = planRoutes(network, {
+          origin: { lat: 18.5015, lng: 73.8542, label: 'Swargate' },
+          destination: { lat: 18.5303, lng: 73.8488, label: 'Shivajinagar' },
+          departureTime: '05:00',
+          budgetINR: 200,
+        });
+
+        const autoLegs = result.routes.fastest.legs.filter(
+          (l) => l.mode === 'AUTO',
+        );
+        for (const leg of autoLegs) {
+          const expectedFare = autoFareINR(leg.distanceKm, 5);
+          expect(leg.fareINR).toBe(expectedFare);
+        }
+      });
     });
   });
 });

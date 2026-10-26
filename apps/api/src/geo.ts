@@ -79,6 +79,10 @@ export class ReverseGeocodingService {
       });
 
       if (!res.ok) {
+        this.cache.set(cacheKey, {
+          data: fallbackResult,
+          expiresAt: Date.now() + CACHE_TTL_MS,
+        });
         return fallbackResult;
       }
 
@@ -116,7 +120,11 @@ export class ReverseGeocodingService {
 
       return result;
     } catch {
-      // Timeout, network error, or parse failure: fallback gracefully without throwing
+      // Timeout, network error, or parse failure: cache fallback so repeated queries are served from cache
+      this.cache.set(cacheKey, {
+        data: fallbackResult,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      });
       return fallbackResult;
     }
   }

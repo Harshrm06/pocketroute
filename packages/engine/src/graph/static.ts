@@ -6,10 +6,7 @@
  * queries. No I/O happens here; the caller must supply parsed network data.
  */
 import type { LineId } from '@pocketroute/shared';
-import {
-  METRO_BOARDING_PENALTY_MIN,
-  METRO_SPEED_KM_PER_H,
-} from '@pocketroute/shared';
+import { METRO_SPEED_KM_PER_H } from '@pocketroute/shared';
 import { metroFareINR, busFareINR } from '../pricing/index.js';
 import {
   metroNextTrain,
@@ -17,6 +14,8 @@ import {
   busSpeedAt,
   nextDeparture,
   walkMinutes,
+  METRO_OPERATING_START_MIN,
+  METRO_OPERATING_END_MIN,
 } from '../timing/index.js';
 import { haversineKm } from '../geometry/index.js';
 import type {
@@ -119,10 +118,17 @@ function buildMetroMacroRides(line: MetroLine): {
       const to = encodeState(toStation.id, lineId);
 
       const timeAt = (t: number): number => {
-        // Wait for boarding penalty, then find the next train
-        const arriveAtPlatform = t + METRO_BOARDING_PENALTY_MIN;
-        const dep = metroNextTrain(arriveAtPlatform, lineId);
+        // Find next train departure using nextDeparture logic
+        const dep = metroNextTrain(t, lineId);
         if (dep === null) return Infinity;
+        // Metro boarding allowed strictly between 06:00 and 22:00 IST per data/pune/params.json
+        const depTod = ((dep % 1440) + 1440) % 1440;
+        if (
+          depTod < METRO_OPERATING_START_MIN ||
+          depTod > METRO_OPERATING_END_MIN
+        ) {
+          return Infinity;
+        }
         return dep + rideTimeMin;
       };
 

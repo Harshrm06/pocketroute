@@ -425,40 +425,55 @@ export type PlacesData = z.infer<typeof placesDataSchema>;
 /**
  * System params schema for data/pune/params.json.
  */
-export const paramsDataSchema = z.object({
-  effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  source: z.string().optional(),
-  budget: z.object({
-    minINR: z.number().int().positive(),
-    maxINR: z.number().int().positive(),
-  }),
-  speeds: z.object({
-    walk: z.object({
-      mPerMin: z.number().positive(),
-      kmPerH: z.number().positive(),
+export const paramsDataSchema = z
+  .object({
+    effectiveFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    source: z.string().optional(),
+    budget: z.object({
+      minINR: z.number().int().positive(),
+      maxINR: z.number().int().positive(),
     }),
-    metro: z.object({ kmPerH: z.number().positive() }),
-    bus: z.object({
-      peakKmPerH: z.number().positive(),
-      midKmPerH: z.number().positive(),
-      offPeakKmPerH: z.number().positive(),
+    speeds: z.object({
+      walk: z.object({
+        mPerMin: z.number().positive(),
+        kmPerH: z.number().positive(),
+      }),
+      metro: z.object({ kmPerH: z.number().positive() }),
+      bus: z.object({
+        peakKmPerH: z.number().positive(),
+        midKmPerH: z.number().positive(),
+        offPeakKmPerH: z.number().positive(),
+      }),
+      auto: z.object({ kmPerH: z.number().positive() }),
+      cab: z.object({ kmPerH: z.number().positive() }),
     }),
-    auto: z.object({ kmPerH: z.number().positive() }),
-    cab: z.object({ kmPerH: z.number().positive() }),
-  }),
-  penalties: z.object({
-    minTransferMin: z.number().nonnegative(),
-    metroBoardingPenaltyMin: z.number().nonnegative(),
-    autoPickupMin: z.number().nonnegative(),
-    cabPickupMin: z.number().nonnegative(),
-    maxWalkLegM: z.number().positive(),
-    fallbackMaxWalkLegM: z.number().positive(),
-  }),
-  headways: z.object({
-    metro: z.object({
-      peakMin: z.number().positive(),
-      offPeakMin: z.number().positive(),
+    penalties: z.object({
+      minTransferMin: z.number().nonnegative(),
+      metroBoardingPenaltyMin: z.number().nonnegative(),
+      autoPickupMin: z.number().nonnegative(),
+      cabPickupMin: z.number().nonnegative(),
+      maxWalkLegM: z.number().positive(),
+      fallbackMaxWalkLegM: z.number().positive(),
     }),
-  }),
-});
+    headways: z.object({
+      metro: z.object({
+        peakMin: z.number().positive(),
+        offPeakMin: z.number().positive(),
+      }),
+    }),
+    operatingHours: z
+      .object({
+        metro: z.object({
+          start: z.string(),
+          end: z.string(),
+          startMin: z.number(),
+          endMin: z.number(),
+        }),
+      })
+      .optional(),
+    windows: z.record(z.string(), z.unknown()).optional(),
+    surges: z.record(z.string(), z.unknown()).optional(),
+    boundingBox: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
 export type ParamsData = z.infer<typeof paramsDataSchema>;

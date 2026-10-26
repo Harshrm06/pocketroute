@@ -27,7 +27,13 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
     setDepartureTime,
     setBudgetINR,
     planRoute,
+    isMetroClosed,
+    loadParams,
   } = usePlanStore();
+
+  React.useEffect(() => {
+    loadParams();
+  }, [loadParams]);
 
   const [isSwapping, setIsSwapping] = useState<boolean>(false);
   const [customTime, setCustomTime] = useState<boolean>(
@@ -194,6 +200,17 @@ export const Dock: React.FC<DockProps> = ({ className = '', onSuccess }) => {
             />
           )}
         </div>
+
+        {isMetroClosed() && (
+          <div
+            role="note"
+            data-testid="metro-closed-notice"
+            className="p-2.5 rounded-card bg-amber-500/10 border border-amber-500/30 text-xs text-ink flex items-center gap-2 mt-1"
+          >
+            <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>Metro is closed at this time. Routed via bus and auto.</span>
+          </div>
+        )}
       </div>
 
       {/* 3. Budget Slider with Presets (PRD §14.5, §15.1) */}

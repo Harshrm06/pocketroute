@@ -392,6 +392,8 @@ export function planRoutes(
     maxWalkM: request.options?.maxWalkM ?? MAX_WALK_LEG_M,
     includeAuto: request.options?.includeAuto ?? true,
     includeCab: request.options?.includeCab ?? true,
+    depMinutes,
+    localHourIST: Math.floor((((depMinutes % 1440) + 1440) % 1440) / 60),
   };
 
   const queryGraph = buildQueryGraph(
