@@ -115,14 +115,15 @@ export class Profiler {
     const E = this.E;
     const L = Math.max(1, this.L);
     const B = Math.max(1, this.B);
+    const T = 3;
 
     const VL = Math.max(2, V * L);
-    const VLB = Math.max(2, V * L * B);
+    const VLTB = Math.max(2, V * L * T * B);
 
     const opsA = Math.round(E * L * Math.log2(VL));
     const opsB = Math.round(E * L * Math.log2(VL));
-    const opsRcspp = Math.round(E * L * B * Math.log2(VLB));
-    const opsDense = Math.round(V * L * (B + 1));
+    const opsRcspp = Math.round(E * L * T * Math.log2(VLTB));
+    const opsDense = Math.round(V * L * T * (B + 1));
 
     return {
       pq: {
@@ -154,6 +155,7 @@ export class Profiler {
         E,
         L,
         B,
+        T,
       },
       theory: {
         routeA: {
@@ -165,11 +167,11 @@ export class Profiler {
           ops: opsB,
         },
         rcspp: {
-          bound: 'O(E*L*B*log(V*L*B))',
+          bound: 'O(E*L*T*log(V*L*T*B))',
           ops: opsRcspp,
         },
         dense: {
-          bound: 'Theta(V*L*(B+1))',
+          bound: 'Theta(V*L*T*(B+1))',
           ops: opsDense,
         },
       },

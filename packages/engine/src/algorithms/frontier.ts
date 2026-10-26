@@ -15,6 +15,8 @@ export interface Label {
   c: number;
   /** Current state (nodeId|lineId). */
   state: StateId;
+  /** Number of bus-to-bus transfers (0 to 2, PRD §23). */
+  busTransfers?: number;
   /** Backpointer to parent label. */
   parent?: Label;
   /** Edge traversed to reach this state. */
@@ -26,11 +28,9 @@ export interface Label {
 /**
  * Non-dominated Pareto frontier for a single state.
  *
- * Invariant (PRD Lemma 4):
- * Sorted by cost ascending, labels satisfy:
- *   c_0 < c_1 < c_2 < ...
- *   t_0 > t_1 > t_2 > ...
- * Costs are integers in [0, B], so the frontier contains at most B + 1 entries.
+ * Invariant (PRD Lemma 4 extended to transfers in v1.2.0):
+ * Label p dominates q iff same node, same currentLineId, and:
+ *   p.time <= q.time && p.cost <= q.cost && p.busTransfers <= q.busTransfers
  */
 export class ParetoFrontier {
   private labels: Label[] = [];
@@ -48,52 +48,35 @@ export class ParetoFrontier {
   }
 
   /**
-   * Tests whether the candidate point (t, c) is dominated by any label in this frontier.
-   * Label p dominates (t, c) iff p.t <= t and p.c <= c.
+   * Tests whether the candidate point (t, c, busTransfers) is dominated by any label in this frontier.
+   * Label p dominates (t, c, busTransfers) iff p.t <= t and p.c <= c and (p.busTransfers ?? 0) <= busTransfers.
    */
-  dominated(t: number, c: number): boolean {
-    if (this.labels.length === 0) return false;
-
-    // Binary search for the label with the largest cost <= c
-    let low = 0;
-    let high = this.labels.length - 1;
-    let bestIdx = -1;
-
-    while (low <= high) {
-      const mid = (low + high) >> 1;
-      if (this.labels[mid]!.c <= c) {
-        bestIdx = mid;
-        low = mid + 1; // Try to find a larger cost <= c
-      } else {
-        high = mid - 1;
+  dominated(t: number, c: number, busTransfers: number = 0): boolean {
+    for (let i = 0; i < this.labels.length; i++) {
+      const p = this.labels[i]!;
+      const pTau = p.busTransfers ?? 0;
+      if (p.t <= t && p.c <= c && pTau <= busTransfers) {
+        return true;
       }
     }
-
-    if (bestIdx === -1) {
-      // All existing labels have cost > c, so none has cost <= c
-      return false;
-    }
-
-    // Because times are strictly decreasing with cost, labels[bestIdx] has
-    // the minimum arrival time among all labels with cost <= c.
-    return this.labels[bestIdx]!.t <= t;
+    return false;
   }
 
   /**
-   * Marks and removes all existing labels that are dominated by (t, c).
-   * Existing label q is dominated iff t <= q.t and c <= q.c.
+   * Marks and removes all existing labels that are dominated by (t, c, busTransfers).
+   * Existing label q is dominated iff t <= q.t and c <= q.c and busTransfers <= (q.busTransfers ?? 0).
    *
    * @returns Array of removed labels (each marked with removed = true).
    */
-  removeDominatedBy(t: number, c: number): Label[] {
+  removeDominatedBy(t: number, c: number, busTransfers: number = 0): Label[] {
     if (this.labels.length === 0) return [];
 
     const kept: Label[] = [];
     const removed: Label[] = [];
 
     for (const q of this.labels) {
-      // q is dominated by (t, c) if c <= q.c and t <= q.t
-      if (c <= q.c && t <= q.t) {
+      const qTau = q.busTransfers ?? 0;
+      if (t <= q.t && c <= q.c && busTransfers <= qTau) {
         q.removed = true;
         removed.push(q);
       } else {
@@ -108,23 +91,27 @@ export class ParetoFrontier {
   /**
    * Inserts a label into the frontier if not dominated.
    * Removes any existing labels dominated by the new label.
-   * Maintains cost-ascending and time-descending invariant.
    *
    * @param label The candidate label to insert.
    * @returns true if label was accepted, false if dominated.
    */
   add(label: Label): boolean {
-    if (this.dominated(label.t, label.c)) {
+    const tau = label.busTransfers ?? 0;
+    if (this.dominated(label.t, label.c, tau)) {
       return false;
     }
 
-    this.removeDominatedBy(label.t, label.c);
+    this.removeDominatedBy(label.t, label.c, tau);
 
-    // Find insertion index to maintain cost ascending
+    // Find insertion index to maintain cost ascending, then time ascending, then tau ascending
     let insertIdx = 0;
     while (
       insertIdx < this.labels.length &&
-      this.labels[insertIdx]!.c < label.c
+      (this.labels[insertIdx]!.c < label.c ||
+        (this.labels[insertIdx]!.c === label.c &&
+          (this.labels[insertIdx]!.t < label.t ||
+            (this.labels[insertIdx]!.t === label.t &&
+              (this.labels[insertIdx]!.busTransfers ?? 0) <= tau))))
     ) {
       insertIdx++;
     }
@@ -139,17 +126,38 @@ export class ParetoFrontier {
 
   /**
    * Asserts the Pareto frontier invariant:
-   * c_0 < c_1 < ... and t_0 > t_1 > ...
+   * 1. No label in the frontier dominates another label.
+   * 2. If all labels have equal transfers, costs are strictly ascending and times strictly descending.
    */
   assertInvariant(): void {
-    for (let i = 0; i < this.labels.length - 1; i++) {
+    for (let i = 0; i < this.labels.length; i++) {
       const cur = this.labels[i]!;
-      const next = this.labels[i + 1]!;
-      if (cur.c >= next.c || cur.t <= next.t) {
-        throw new Error(
-          `Pareto frontier invariant violated at index ${i}: ` +
-            `(${cur.t}, ${cur.c}) vs (${next.t}, ${next.c})`,
-        );
+      const curTau = cur.busTransfers ?? 0;
+      for (let j = 0; j < this.labels.length; j++) {
+        if (i === j) continue;
+        const other = this.labels[j]!;
+        const otherTau = other.busTransfers ?? 0;
+        if (cur.t <= other.t && cur.c <= other.c && curTau <= otherTau) {
+          throw new Error(
+            `Pareto frontier invariant violated: label ${i} (${cur.t}, ${cur.c}, ${curTau}) dominates label ${j} (${other.t}, ${other.c}, ${otherTau})`,
+          );
+        }
+      }
+    }
+
+    const allSameTransfers = this.labels.every(
+      (l) => (l.busTransfers ?? 0) === (this.labels[0]?.busTransfers ?? 0),
+    );
+    if (allSameTransfers && this.labels.length > 1) {
+      for (let i = 0; i < this.labels.length - 1; i++) {
+        const cur = this.labels[i]!;
+        const next = this.labels[i + 1]!;
+        if (cur.c >= next.c || cur.t <= next.t) {
+          throw new Error(
+            `Pareto frontier invariant violated at index ${i}: ` +
+              `(${cur.t}, ${cur.c}) vs (${next.t}, ${next.c})`,
+          );
+        }
       }
     }
   }

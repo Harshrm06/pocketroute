@@ -115,13 +115,13 @@ describe('packages/engine/src/plan', () => {
 
       expect(bounds.routeA.bound).toBe('O(E*L*log(V*L))');
       expect(bounds.routeB.bound).toBe('O(E*L*log(V*L))');
-      expect(bounds.rcspp.bound).toBe('O(E*L*B*log(V*L*B))');
-      expect(bounds.dense.bound).toBe('Theta(V*L*(B+1))');
+      expect(bounds.rcspp.bound).toBe('O(E*L*T*log(V*L*T*B))');
+      expect(bounds.dense.bound).toBe('Theta(V*L*T*(B+1))');
 
       expect(bounds.routeA.ops).toBeGreaterThan(0);
       expect(bounds.routeB.ops).toBeGreaterThan(0);
       expect(bounds.rcspp.ops).toBeGreaterThan(bounds.routeA.ops);
-      expect(bounds.dense.ops).toBe(100 * 20 * 101);
+      expect(bounds.dense.ops).toBe(100 * 20 * 3 * 101);
     });
   });
 
@@ -540,6 +540,41 @@ describe('packages/engine/src/plan', () => {
             l.to.name.includes('Padmavati BRT'),
         );
         expect(usesPadmavatiBrt).toBe(false);
+      });
+
+      it('a 4-stop continuation on one bus is one leg with one ₹ fare (Step 3g)', () => {
+        // Upper Depot to Pune Station on Bus 140 travels through 4 stops:
+        // Upper Depot -> Bibwewadi -> Market Yard -> Swargate -> Pune Station
+        const upperDepotCoord = {
+          lat: 18.4604,
+          lng: 73.8721,
+          label: 'Upper Indira Nagar Depot',
+        };
+        const puneStationCoord = {
+          lat: 18.5288,
+          lng: 73.8744,
+          label: 'Pune Railway Station',
+        };
+
+        const result = planRoutes(network, {
+          origin: upperDepotCoord,
+          destination: puneStationCoord,
+          departureTime: '10:00',
+          budgetINR: 100,
+        });
+
+        const route = result.routes.smart ?? result.routes.cheapest;
+        expect(route.feasible).toBe(true);
+
+        const busLegs = route.legs.filter((l) => l.mode === 'BUS');
+        // Must be exactly one bus leg
+        expect(busLegs.length).toBe(1);
+        const leg = busLegs[0]!;
+        expect(leg.routeNumbers).toBeDefined();
+        expect(leg.routeNumbers).toContain('140');
+        expect(leg.stopCount).toBeGreaterThanOrEqual(4);
+        // Single fare charged for the continuous ride distance
+        expect(leg.fareINR).toBeGreaterThanOrEqual(10);
       });
     });
   });

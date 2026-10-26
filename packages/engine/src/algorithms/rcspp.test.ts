@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { LineId, Mode } from '@pocketroute/shared';
 import type { Edge, GraphNode, StateGraph } from '../graph/index.js';
-import { encodeState } from '../graph/index.js';
+import { decodeState, encodeState } from '../graph/index.js';
 import { Profiler } from '../profiler/index.js';
 import { dijkstra, type RouteResult } from './dijkstra.js';
 import { backwardDijkstra, rcspp } from './rcspp.js';
@@ -160,12 +160,12 @@ describe('packages/engine/src/algorithms/rcspp', () => {
       const res5 = rcspp(multiRouteGraph, 'O', 'D', 5);
       expect(res5.feasible).toBe(false);
 
-      // 3. Budget 10: Selects the cheap slow route (BUS, 50 min, ₹10)
+      // 3. Budget 10: Selects the cheap slow route (BUS, 52 min including 2 min transfer friction, ₹10)
       const res10 = rcspp(multiRouteGraph, 'O', 'D', 10);
       expect(res10.feasible).toBe(true);
       if (res10.feasible) {
         expect(res10.totalFareINR).toBe(10);
-        expect(res10.totalTimeMin).toBe(50);
+        expect(res10.totalTimeMin).toBe(52);
         expect(res10.legs.length).toBe(2);
         expect(res10.legs[0]!.line).toBe('BUS_2');
         expect(res10.legs[1]!.line).toBe('BUS_24');
@@ -206,11 +206,11 @@ describe('packages/engine/src/algorithms/rcspp', () => {
         expect(inf.minimumRequiredFareINR).toBe(10);
       }
 
-      // Feasible check returns optimal time for budget 25 (only bus feasible, 50 min)
+      // Feasible check returns optimal time for budget 25 (only bus feasible, 52 min with 2 min transfer friction)
       const opt25 = rcspp(multiRouteGraph, 'O', 'D', 25) as RouteResult;
       expect(opt25.feasible).toBe(true);
       expect(opt25.totalFareINR).toBeLessThanOrEqual(25);
-      expect(opt25.totalTimeMin).toBe(50);
+      expect(opt25.totalTimeMin).toBe(52);
 
       // Budget 30 opens metro (20 min)
       const opt30 = rcspp(multiRouteGraph, 'O', 'D', 30) as RouteResult;
@@ -295,6 +295,241 @@ describe('packages/engine/src/algorithms/rcspp', () => {
 
       // Max frontier size per state was tracked
       expect(profiler.maxFrontierSize).toBeGreaterThan(0);
+    });
+  });
+
+  describe('v1.2.0 Bus Transfers and Timetable Wait (PRD §23, Step 3g)', () => {
+    it('a direct single-bus route beats a 2-bus transfer route with similar duration (fixture where the transfer route is 2 minutes faster in ride time but has a 6-minute wait)', () => {
+      // S -> D: direct single-bus (ride time 20 min, wait 0 min -> total 20 min, 0 transfers)
+      // S -> H -> D: 2-bus transfer
+      //   S -> H on BUS_A: ride time 9 min (departs at t=0, arrives t=9)
+      //   H -> D on BUS_B: ride time 9 min (total ride time 18 min, 2 min faster!)
+      //   At H, passenger is ready at t = 9 + 2 (transfer friction) = 11.
+      //   BUS_B timetable grid has departures at t=15 (wait = 6 min from arrival at 9).
+      //   Arrival at D is 15 + 9 = 24 min.
+      // Direct single-bus (20 min) beats 2-bus transfer (24 min).
+
+      const nodes = new Map<string, GraphNode>();
+      for (const id of ['S', 'H', 'D']) {
+        nodes.set(id, {
+          id,
+          name: id,
+          lat: 18.5,
+          lng: 73.8,
+          type: 'bus_stop',
+          lines: ['NONE'],
+        });
+      }
+      const adj = new Map<string, Edge[]>();
+      const nodeAdj = new Map<string, Edge[]>();
+
+      const addTestEdge = (e: Edge) => {
+        const sl = adj.get(e.from) ?? [];
+        sl.push(e);
+        adj.set(e.from, sl);
+
+        const fromNode = decodeState(e.from).nodeId;
+        const nl = nodeAdj.get(fromNode) ?? [];
+        nl.push(e);
+        nodeAdj.set(fromNode, nl);
+      };
+
+      // Direct bus: S -> D
+      addTestEdge({
+        from: encodeState('S', 'BUS_DIRECT'),
+        to: encodeState('D', 'BUS_DIRECT'),
+        line: 'BUS_DIRECT',
+        mode: 'BUS',
+        fareINR: 20,
+        minTimeMin: 20,
+        timeAt: (t) => t + 20,
+        meta: { distanceKm: 8, stops: 4, geometryQuality: 'estimated' },
+      });
+
+      // Transfer bus 1: S -> H
+      addTestEdge({
+        from: encodeState('S', 'BUS_A'),
+        to: encodeState('H', 'BUS_A'),
+        line: 'BUS_A',
+        mode: 'BUS',
+        fareINR: 15,
+        minTimeMin: 9,
+        timeAt: (t) => t + 9,
+        meta: { distanceKm: 4, stops: 2, geometryQuality: 'estimated' },
+      });
+
+      // Transfer bus 2: H -> D with timetable departure at multiples of 15 min
+      addTestEdge({
+        from: encodeState('H', 'BUS_B'),
+        to: encodeState('D', 'BUS_B'),
+        line: 'BUS_B',
+        mode: 'BUS',
+        fareINR: 15,
+        minTimeMin: 9,
+        timeAt: (t) => {
+          const dep = Math.ceil(t / 15) * 15;
+          return dep + 9;
+        },
+        meta: { distanceKm: 4, stops: 2, geometryQuality: 'estimated' },
+      });
+
+      const fixtureGraph: StateGraph = {
+        nodes,
+        adj,
+        nodeAdj,
+        edgeCount: 3,
+        lineCount: 3,
+      };
+
+      const res = rcspp(
+        fixtureGraph,
+        'S',
+        'D',
+        50,
+        undefined,
+        0,
+      ) as RouteResult;
+      expect(res.feasible).toBe(true);
+      expect(res.totalTimeMin).toBe(20);
+      expect(res.legs.length).toBe(1);
+      expect(res.legs[0]!.line).toBe('BUS_DIRECT');
+    });
+
+    it('two-bus transfer charges two bus tickets', () => {
+      // S -> H (BUS_A, fare 15) -> D (BUS_B, fare 20)
+      // Total fare should be 35 (two tickets)
+      const nodes = new Map<string, GraphNode>();
+      for (const id of ['S', 'H', 'D']) {
+        nodes.set(id, {
+          id,
+          name: id,
+          lat: 18.5,
+          lng: 73.8,
+          type: 'bus_stop',
+          lines: ['NONE'],
+        });
+      }
+      const adj = new Map<string, Edge[]>();
+      const nodeAdj = new Map<string, Edge[]>();
+
+      const addTestEdge = (e: Edge) => {
+        const sl = adj.get(e.from) ?? [];
+        sl.push(e);
+        adj.set(e.from, sl);
+        const fromNode = decodeState(e.from).nodeId;
+        const nl = nodeAdj.get(fromNode) ?? [];
+        nl.push(e);
+        nodeAdj.set(fromNode, nl);
+      };
+
+      addTestEdge({
+        from: encodeState('S', 'BUS_A'),
+        to: encodeState('H', 'BUS_A'),
+        line: 'BUS_A',
+        mode: 'BUS',
+        fareINR: 15,
+        minTimeMin: 10,
+        timeAt: (t) => t + 10,
+        meta: { distanceKm: 5, stops: 2, geometryQuality: 'estimated' },
+      });
+
+      addTestEdge({
+        from: encodeState('H', 'BUS_B'),
+        to: encodeState('D', 'BUS_B'),
+        line: 'BUS_B',
+        mode: 'BUS',
+        fareINR: 20,
+        minTimeMin: 10,
+        timeAt: (t) => t + 10,
+        meta: { distanceKm: 8, stops: 3, geometryQuality: 'estimated' },
+      });
+
+      const fixtureGraph: StateGraph = {
+        nodes,
+        adj,
+        nodeAdj,
+        edgeCount: 2,
+        lineCount: 2,
+      };
+
+      const res = rcspp(
+        fixtureGraph,
+        'S',
+        'D',
+        50,
+        undefined,
+        0,
+      ) as RouteResult;
+      expect(res.feasible).toBe(true);
+      expect(res.totalFareINR).toBe(35); // 15 + 20 = 2 bus tickets
+      expect(res.legs.length).toBe(2);
+      expect(res.legs[0]!.fareINR).toBe(15);
+      expect(res.legs[1]!.fareINR).toBe(20);
+    });
+
+    it('three-bus route is rejected when the cap is 2 transfers (and 4-bus route rejected with cap 2)', () => {
+      // Chain of 4 buses: N0 -> N1 (BUS_1) -> N2 (BUS_2) -> N3 (BUS_3) -> N4 (BUS_4)
+      const nodes = new Map<string, GraphNode>();
+      for (const id of ['N0', 'N1', 'N2', 'N3', 'N4']) {
+        nodes.set(id, {
+          id,
+          name: id,
+          lat: 18.5,
+          lng: 73.8,
+          type: 'bus_stop',
+          lines: ['NONE'],
+        });
+      }
+      const adj = new Map<string, Edge[]>();
+      const nodeAdj = new Map<string, Edge[]>();
+
+      const addTestEdge = (e: Edge) => {
+        const sl = adj.get(e.from) ?? [];
+        sl.push(e);
+        adj.set(e.from, sl);
+        const fromNode = decodeState(e.from).nodeId;
+        const nl = nodeAdj.get(fromNode) ?? [];
+        nl.push(e);
+        nodeAdj.set(fromNode, nl);
+      };
+
+      for (let i = 0; i < 4; i++) {
+        const from = `N${i}`;
+        const to = `N${i + 1}`;
+        const line = `BUS_${i + 1}` as LineId;
+        addTestEdge({
+          from: encodeState(from, line),
+          to: encodeState(to, line),
+          line,
+          mode: 'BUS',
+          fareINR: 10,
+          minTimeMin: 10,
+          timeAt: (t) => t + 10,
+          meta: { distanceKm: 2, stops: 1, geometryQuality: 'estimated' },
+        });
+      }
+
+      const chainGraph: StateGraph = {
+        nodes,
+        adj,
+        nodeAdj,
+        edgeCount: 4,
+        lineCount: 4,
+      };
+
+      // 4-bus route (3 bus transfers) is rejected under default cap = 2
+      const res4 = rcspp(chainGraph, 'N0', 'N4', 100);
+      expect(res4.feasible).toBe(false);
+
+      // 3-bus route (2 bus transfers) is feasible under default cap = 2
+      const res3 = rcspp(chainGraph, 'N0', 'N3', 100);
+      expect(res3.feasible).toBe(true);
+
+      // 3-bus route (2 bus transfers) is rejected when cap is 1 transfer
+      const res3Capped = rcspp(chainGraph, 'N0', 'N3', 100, undefined, 0, {
+        maxBusTransfers: 1,
+      });
+      expect(res3Capped.feasible).toBe(false);
     });
   });
 });

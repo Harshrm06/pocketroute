@@ -74,4 +74,68 @@ describe('ParetoFrontier', () => {
       { numRuns: 100 },
     );
   });
+
+  it('Dominance with transfers: a label with fewer transfers and equal time and cost is kept', () => {
+    const frontier = new ParetoFrontier();
+
+    // l0 has 0 transfers: (t=50, c=20, tau=0)
+    const l0: Label = {
+      t: 50,
+      c: 20,
+      state: 'A|BUS_1',
+      busTransfers: 0,
+      removed: false,
+    };
+    expect(frontier.add(l0)).toBe(true);
+    expect(frontier.size).toBe(1);
+
+    // Candidate with 1 transfer, equal time and cost: (t=50, c=20, tau=1)
+    // Should be dominated by l0 because l0.tau (0) <= candidate.tau (1)
+    expect(frontier.dominated(50, 20, 1)).toBe(true);
+    const l1: Label = {
+      t: 50,
+      c: 20,
+      state: 'A|BUS_1',
+      busTransfers: 1,
+      removed: false,
+    };
+    expect(frontier.add(l1)).toBe(false);
+    expect(frontier.size).toBe(1);
+
+    // If a label with 1 transfer were already in frontier, a label with 0 transfers and equal (t, c) removes it
+    const frontier2 = new ParetoFrontier();
+    const l1Existing: Label = {
+      t: 50,
+      c: 20,
+      state: 'A|BUS_1',
+      busTransfers: 1,
+      removed: false,
+    };
+    expect(frontier2.add(l1Existing)).toBe(true);
+
+    const l0New: Label = {
+      t: 50,
+      c: 20,
+      state: 'A|BUS_1',
+      busTransfers: 0,
+      removed: false,
+    };
+    expect(frontier2.dominated(50, 20, 0)).toBe(false);
+    expect(frontier2.add(l0New)).toBe(true);
+    expect(l1Existing.removed).toBe(true);
+    expect(frontier2.size).toBe(1);
+
+    // A label with more transfers but strictly better time is NOT dominated and is kept
+    const lFastTransfers: Label = {
+      t: 40,
+      c: 20,
+      state: 'A|BUS_1',
+      busTransfers: 1,
+      removed: false,
+    };
+    expect(frontier2.dominated(40, 20, 1)).toBe(false);
+    expect(frontier2.add(lFastTransfers)).toBe(true);
+    expect(frontier2.size).toBe(2);
+    expect(l0New.removed).toBe(false);
+  });
 });

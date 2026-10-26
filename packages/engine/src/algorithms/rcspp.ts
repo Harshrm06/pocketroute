@@ -172,6 +172,11 @@ function reconstructRcsppPath(best: Label, t0: number): RouteResult {
  * @param t0 Departure time in minutes since midnight IST (default 0).
  * @returns RouteResult if feasible, otherwise Infeasible.
  */
+export interface RcsppOptions {
+  maxBusTransfers?: number;
+  transferFrictionMin?: number;
+}
+
 export function rcspp(
   graph: StateGraph,
   origin: string,
@@ -179,7 +184,11 @@ export function rcspp(
   budget: number,
   profiler?: Profiler,
   t0 = 0,
+  options?: RcsppOptions,
 ): RouteResult | Infeasible {
+  const maxBusTransfers = options?.maxBusTransfers ?? 2;
+  const transferFrictionMin = options?.transferFrictionMin ?? 2;
+
   const LB_t = backwardDijkstra(graph, dest, 'TIME');
   const LB_c = backwardDijkstra(graph, dest, 'FARE');
 
@@ -211,6 +220,7 @@ export function rcspp(
     t: t0,
     c: 0,
     state: startState,
+    busTransfers: 0,
     removed: false,
   };
 
@@ -246,9 +256,22 @@ export function rcspp(
       // Rule C: In any path, two consecutive edges may not share the same line identifier
       if (e.line === l) continue;
 
+      const isPrevBus = l.startsWith('BUS_');
+      const isNextBus = e.mode === 'BUS';
+      const isBusToBus = isPrevBus && isNextBus;
+      const currentTransfers = lambda.busTransfers ?? 0;
+      const nextTransfers = isBusToBus
+        ? currentTransfers + 1
+        : currentTransfers;
+
+      // Hard constraint: Reject any label where busTransfers would exceed cap (default 2)
+      if (nextTransfers > maxBusTransfers) continue;
+
       profiler?.relax();
 
-      const arrTime = e.timeAt(t);
+      // Bus-to-bus transfer: wait for the next bus from the timetable + transferFrictionMin
+      const readyTime = isBusToBus ? t + transferFrictionMin : t;
+      const arrTime = e.timeAt(readyTime);
       if (!Number.isFinite(arrTime)) continue;
 
       const tPrime = arrTime;
@@ -278,13 +301,17 @@ export function rcspp(
         frontiers.set(targetState, targetFrontier);
       }
 
-      if (targetFrontier.dominated(tPrime, cPrime)) {
+      if (targetFrontier.dominated(tPrime, cPrime, nextTransfers)) {
         profiler?.pruneByDominance();
         continue;
       }
 
       // Remove dominated existing labels
-      const removed = targetFrontier.removeDominatedBy(tPrime, cPrime);
+      const removed = targetFrontier.removeDominatedBy(
+        tPrime,
+        cPrime,
+        nextTransfers,
+      );
       if (removed.length > 0) {
         profiler?.removeDominance(removed.length);
       }
@@ -293,6 +320,7 @@ export function rcspp(
         t: tPrime,
         c: cPrime,
         state: targetState,
+        busTransfers: nextTransfers,
         parent: lambda,
         edge: e,
         removed: false,

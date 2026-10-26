@@ -18,7 +18,7 @@ import type {
 import { MAX_WALK_LEG_M } from '@pocketroute/shared';
 import { formatHHmm24, parseHHmm, timeOfDayMinutes } from './timing/index.js';
 import { bezierEstimate } from './geometry/index.js';
-import { checkDailyPassTip } from './pricing/index.js';
+import { checkDailyPassTip, busFareINR } from './pricing/index.js';
 import type {
   NetworkData,
   QueryGraphOptions,
@@ -33,6 +33,7 @@ import { Profiler } from './profiler/index.js';
 import {
   denseDP,
   dijkstra,
+  type DijkstraLeg,
   type Infeasible,
   rcspp,
   type RouteResult,
@@ -46,6 +47,7 @@ export interface GraphStats {
   V: number;
   E: number;
   L: number;
+  T?: number;
 }
 
 export interface TheoryBound {
@@ -110,14 +112,15 @@ function getOrCreateStaticGraph(network: NetworkData): StaticGraphResult {
 }
 
 // ---------------------------------------------------------------------------
-// Theoretical Bounds (PRD §8.6)
+// Theoretical Bounds (PRD §8.6 & v1.2.0)
 // ---------------------------------------------------------------------------
 
 /**
  * Computes theoretical complexity bounds and estimated operations for each algorithm.
- * PRD §8.6.
+ * PRD §8.6 & v1.2.0 (Step 3e):
+ * Bound for RCSPP is O(E*L*T*log(V*L*T*B)) with T = 3 (at most 3 buses / 2 transfers).
  *
- * @param graphStats V: node count, E: edge count, L: line identifier count
+ * @param graphStats V: node count, E: edge count, L: line identifier count, T: transfers dimension
  * @param budget B: maximum allowable fare
  */
 export function theoreticalBounds(
@@ -128,14 +131,15 @@ export function theoreticalBounds(
   const E = graphStats.E;
   const L = Math.max(1, graphStats.L);
   const B = Math.max(1, budget);
+  const T = Math.max(1, graphStats.T ?? 3);
 
   const VL = Math.max(2, V * L);
-  const VLB = Math.max(2, V * L * B);
+  const VLTB = Math.max(2, V * L * T * B);
 
   const opsA = Math.round(E * L * Math.log2(VL));
   const opsB = Math.round(E * L * Math.log2(VL));
-  const opsRcspp = Math.round(E * L * B * Math.log2(VLB));
-  const opsDense = Math.round(V * L * (B + 1));
+  const opsRcspp = Math.round(E * L * T * Math.log2(VLTB));
+  const opsDense = Math.round(V * L * T * (B + 1));
 
   return {
     routeA: {
@@ -147,11 +151,11 @@ export function theoreticalBounds(
       ops: opsB,
     },
     rcspp: {
-      bound: 'O(E*L*B*log(V*L*B))',
+      bound: 'O(E*L*T*log(V*L*T*B))',
       ops: opsRcspp,
     },
     dense: {
-      bound: 'Theta(V*L*(B+1))',
+      bound: 'Theta(V*L*T*(B+1))',
       ops: opsDense,
     },
   };
@@ -221,6 +225,73 @@ function formatInstruction(
 }
 
 /**
+ * Merges consecutive same-bus legs into one single BUS leg.
+ * PRD §23 & Step 3b:
+ * Consecutive hop on same bus corridor/route uses single macro-ride leg
+ * with computeBusFare(total distance on that bus).
+ */
+function mergeConsecutiveSameBusLegs(
+  graph: StateGraph,
+  rawLegs: DijkstraLeg[],
+): DijkstraLeg[] {
+  if (rawLegs.length <= 1) return rawLegs;
+  const merged: DijkstraLeg[] = [];
+
+  for (let i = 0; i < rawLegs.length; i++) {
+    const leg = rawLegs[i]!;
+    if (merged.length === 0) {
+      merged.push({ ...leg });
+      continue;
+    }
+    const prev = merged[merged.length - 1]!;
+    const isSameBus =
+      prev.mode === 'BUS' &&
+      leg.mode === 'BUS' &&
+      (prev.line === leg.line ||
+        (prev.meta?.routeNumbers &&
+          leg.meta?.routeNumbers &&
+          prev.meta.routeNumbers.some((r) =>
+            leg.meta?.routeNumbers?.includes(r),
+          )));
+
+    if (isSameBus) {
+      const totalDist = prev.distanceKm + leg.distanceKm;
+      const combinedStops = (prev.stops ?? 0) + (leg.stops ?? 0);
+      const intermediateStopNode = graph.nodes.get(prev.to);
+      const intermediateStopName = intermediateStopNode?.name ?? prev.to;
+      const prevIntermediates = prev.meta?.intermediateStops ?? [];
+      const legIntermediates = leg.meta?.intermediateStops ?? [];
+      const combinedIntermediates = [
+        ...prevIntermediates,
+        intermediateStopName,
+        ...legIntermediates,
+      ];
+
+      prev.to = leg.to;
+      prev.arriveAt = leg.arriveAt;
+      prev.arriveMinutes = leg.arriveMinutes;
+      prev.durationMin = leg.arriveMinutes - prev.departMinutes;
+      prev.distanceKm = totalDist;
+      prev.stops = combinedStops;
+      prev.fareINR = busFareINR(totalDist);
+      prev.fare = prev.fareINR;
+      if (prev.meta) {
+        prev.meta = {
+          ...prev.meta,
+          distanceKm: totalDist,
+          stops: combinedStops,
+          intermediateStops: combinedIntermediates,
+        };
+      }
+    } else {
+      merged.push({ ...leg });
+    }
+  }
+
+  return merged;
+}
+
+/**
  * Transforms an internal algorithm RouteResult into the public Route schema.
  */
 function formatRoute(
@@ -238,8 +309,10 @@ function formatRoute(
     };
   }
 
+  const rawLegs = mergeConsecutiveSameBusLegs(graph, result.legs);
+
   let prevArriveMinutes = queryDepMinutes;
-  const legs = result.legs.map((leg) => {
+  const legs = rawLegs.map((leg, idx) => {
     const fromNode = graph.nodes.get(leg.from);
     const toNode = graph.nodes.get(leg.to);
 
@@ -258,12 +331,19 @@ function formatRoute(
     prevArriveMinutes = leg.arriveMinutes;
 
     const lineLabel = formatLineLabel(leg.line);
-    const instruction = formatInstruction(
+    const isBus = leg.mode === 'BUS';
+    const isMetro = leg.mode === 'METRO';
+    const isPrevBus = idx > 0 && rawLegs[idx - 1]!.mode === 'BUS';
+
+    let instruction = formatInstruction(
       leg.mode,
       lineLabel,
       fromPoint.name,
       toPoint.name,
     );
+    if (isBus && isPrevBus) {
+      instruction = `Change Bus at ${fromPoint.name} to ${lineLabel} (Wait ${waitMin} mins).`;
+    }
 
     // Compute geometry (use Bézier estimate if not explicit)
     const geometry = bezierEstimate(
@@ -272,8 +352,6 @@ function formatRoute(
     );
 
     const legMeta = leg.meta;
-    const isBus = leg.mode === 'BUS';
-    const isMetro = leg.mode === 'METRO';
 
     const routeNumbers = isBus
       ? (legMeta?.routeNumbers ?? [leg.line.replace(/^BUS_/, '')])
@@ -311,6 +389,8 @@ function formatRoute(
         : undefined;
 
     const scheduleBasis = isBus ? ('estimate' as const) : undefined;
+    const transferAt = isBus && isPrevBus ? fromPoint.name : undefined;
+    const transferWaitMinutes = isBus && isPrevBus ? waitMin : undefined;
 
     return {
       mode: leg.mode,
@@ -341,10 +421,13 @@ function formatRoute(
       frequencyMinutes,
       nextDepartures,
       scheduleBasis,
+      transferAt,
+      transferWaitMinutes,
     };
   });
 
   const totalDistanceKm = legs.reduce((acc, l) => acc + l.distanceKm, 0);
+  const totalFareINR = legs.reduce((acc, l) => acc + l.fareINR, 0);
   const cumulativeBusFare = legs
     .filter((l) => l.mode === 'BUS')
     .reduce((sum, l) => sum + l.fareINR, 0);
@@ -352,7 +435,7 @@ function formatRoute(
 
   return {
     feasible: true,
-    totalFareINR: result.totalFareINR,
+    totalFareINR,
     arrivalTime: result.arrivalTime,
     durationMin: result.durationMin,
     departureTime: result.departureTime,

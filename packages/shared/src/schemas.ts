@@ -172,6 +172,9 @@ export const legSchema = z.object({
   frequencyMinutes: z.number().nonnegative().optional(),
   nextDepartures: z.array(z.string()).optional(),
   scheduleBasis: z.literal('estimate').optional(),
+  // Bus-to-bus transfer metadata (v1.2.0, PRD §23)
+  transferAt: z.string().optional(),
+  transferWaitMinutes: z.number().nonnegative().optional(),
 });
 export type Leg = z.infer<typeof legSchema>;
 export type RouteLeg = Leg;
@@ -253,6 +256,7 @@ export const profilerMetricsSchema = z.object({
     E: z.number().int().nonnegative(),
     L: z.number().int().nonnegative(),
     B: z.number().int().nonnegative(),
+    T: z.number().int().nonnegative().optional(),
   }),
   theory: z.object({
     routeA: z.object({
