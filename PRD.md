@@ -810,4 +810,70 @@ Tabs:
 
 ## 21. Changelog
 
-- **2026-10-26**: Added `@playwright/test` and `@axe-core/playwright` to Section 11.1 for automated WCAG 2.2 AA accessibility audits and Playwright E2E verification.
+- **2026-10-26 (v1.1.0)**: Added Section 22 specifying collision-free map overlay safe zone, live GPS geolocation with Nominatim reverse geocoding cache, first-mile connector with auto/walk feeder edges, map click-to-pin & marker dragging, timeline-to-map synchronization, 60 fps live commute animation simulator, and time-of-day transit service rules (metro closing window & night auto surcharge).
+- **2026-10-26 (v1.0.1)**: Added `@playwright/test` and `@axe-core/playwright` to Section 11.1 for automated WCAG 2.2 AA accessibility audits and Playwright E2E verification.
+
+---
+
+## 22. Map Layout, Geolocation, and Live Simulation
+
+### 22.1 Layout Safe Zone and Non-Colliding Markers
+- **Root Cause & Objective:** Prevent visual collisions between Start/Destination pills, the midpoint "Estimated Path" pill, route comparison chips, and UI panels (left dock, bottom sheet, right results).
+- **Map Overlay Layer:** A dedicated map overlay layer above the vector map canvas (z-index 450) and beneath floating navigation/dock UI (z-index 30/20). Pointer events default to `none` with individual pills set to `pointer-events: auto`.
+- **Dock Safe Zone Offsets:**
+  - Desktop (≥ 1024 px): overlay content padded by 396 px on the left (380 px dock + 16 px buffer).
+  - Tablet (640 px to 1023 px): overlay padded by 376 px on the left (360 px dock + 16 px buffer).
+  - Mobile (< 640 px): pills stacked inside or above the top dock card and clear of the bottom sheet.
+  - Invariant: No floating pill or marker tag may anchor at `left: 0` or `top: 0`.
+- **Marker Tags & Anchors:**
+  - Start marker: emerald pill `Start: <Name>`, anchored `bottom-left` (or pixel offset `[0, -36]`), z-index 400.
+  - Destination marker: coral pill `Dest: <Name>`, anchored `bottom-right` (or pixel offset `[0, -36]`), z-index 401.
+  - Zoom < 12: marker labels collapse into a compact icon, expanding to full text on hover or focus.
+- **Route Callouts:**
+  - Single visible route: Callout positioned strictly at 50% arc length computed from cumulative Haversine distance along the polyline (never coordinate array midpoints or start/end).
+  - Multiple visible routes: Callouts positioned at 35% arc length for Fastest, 55% for Smart Budget, and 70% for Cheapest, offset perpendicular to the line direction by ±14 px on alternating sides.
+- **Acceptance Criteria:** At 390×844, 768×1024, and 1440×900 viewports, bounding-box collision tests verify that no two elements overlap among: Start pill, Destination pill, route callouts, dock, results panel, mobile bottom sheet, and map controls.
+
+### 22.2 GPS Location and First-Mile Connector
+- **User-Initiated GPS:** "Use Current Location" button in Start input and autocomplete dropdown; floating "My Location" button at bottom-right pulsing a blue accuracy ring and dot. GPS is only invoked on explicit user tap (never on page load).
+- **Browser Geolocation:** Invokes `navigator.geolocation.getCurrentPosition` with `enableHighAccuracy: true`, `timeout: 10000`, `maximumAge: 0`. Coordinates are never persisted across page reloads.
+- **Error Handling & Bounds Check:**
+  - Explicit inline error messages for: Permission Denied, Position Unavailable, Timeout, and Insecure Context.
+  - Pune Bounding Box (lat 18.40 to 18.70, lng 73.70 to 74.00): If coordinates fall outside, displays: *"You appear to be outside Pune. Pick a start point, or try the demo location."*
+  - Demo Fallback: Toast with button *"Simulate GPS in Pune (VIT Bibwewadi / Swargate)"* using verified landmark coordinates from `data/pune/places.json` (`pl_swargate_bus_stand` lat 18.5015, lng 73.8542; `pl_pune_railway_station` lat 18.5288, lng 73.8744).
+- **Reverse Geocoding Endpoint:** `GET /api/v1/geo/reverse?lat=&lng=`
+  - Proxies to Nominatim reverse (`https://nominatim.openstreetmap.org/reverse?format=json`) with `NOMINATIM_USER_AGENT`.
+  - Rate limited to 1 req/sec, cached for 24 hours keyed by coordinates rounded to 4 decimal places, with a 2-second timeout.
+  - Sets Start input to `"Current Location (<Area Name>)"`. On reverse geocode failure, falls back cleanly to `"Current Location (<lat>, <lng>)"` without blocking routing.
+- **First-Mile Connector (packages/engine):**
+  - Origin GPS point acts as query origin node `O` without creating a new node type.
+  - Finds the 3 nearest transit stops by Haversine distance within Pune.
+  - For each stop: if distance ≤ 1.2 km, creates a `WALK` access edge at ₹0. If distance > 1.2 km and ≤ 4.0 km, creates an `AUTO` feeder edge priced using `autoFareINR(distKm)`.
+  - Road geometry via OSRM or Bézier fallback marked `geometryQuality: "estimated"`.
+  - Acceptance Criteria: Property tests verify nearest-3 stop selection, walk threshold at 1.2 km, auto feeder pricing for 2 km and 4 km, and 400 validation error for points outside Pune.
+
+### 22.3 Map Click-to-Pin, Drag, and Swap
+- **Endpoint Swap:** Circular swap button between Start and Destination with 180° rotation over 260 ms, swapping inputs and triggering route re-calculation. Respects `prefers-reduced-motion`. Full keyboard accessibility.
+- **Map Click-to-Pin:** Clicking the map populates the first empty input (Origin or Destination), or presents a contextual prompt *"Set as Start or Destination?"* if both fields are populated.
+- **Marker Dragging:** Start and Destination markers have `draggable: true`. On drag end, the new coordinates are reverse-geocoded via `/api/v1/geo/reverse` and the route is updated. Drag preview remains lightweight with no API calls until release.
+
+### 22.4 Timeline-to-Map Synchronization and Live Commute Simulation
+- **Timeline Interaction:**
+  - Hovering a timeline step highlights the corresponding map segment.
+  - Clicking a step selects that leg, calls `map.fitBounds` with safe padding clearing the dock and sheet, thickens the polyline by 2 px, and shows a floating stop detail card.
+  - On mobile, clicking a leg collapses the bottom sheet to the half snap point (50 vh) ensuring map visibility.
+- **Live Commute Simulator:**
+  - *"▶ Simulate Live Commute"* button on the selected route card.
+  - Animates a commuter marker along the route's concatenated polyline from start to end using `requestAnimationFrame` at ~60 fps, capped at a maximum of 20 seconds duration.
+  - Marker icon dynamically changes based on active transit mode (`WALK`, `BUS`, `METRO`, `AUTO`, `CAB`).
+  - Live HUD displays a running clock starting at `departureTime` and advancing with simulated minutes, and a *"Money Spent So Far (₹)"* counter incrementing at leg boundaries.
+  - Controls: Play, Pause, Restart.
+  - Respects `prefers-reduced-motion` by displaying a static progress bar instead of 60 fps marker animation. Clean animation frame cancellation on unmount.
+
+### 22.5 Time-of-Day Service Rules
+- **Metro Service Window:** Pune Metro operates strictly from 06:00 to 22:00 IST per `data/pune/params.json`.
+  - The routing engine excludes any metro boarding edge whose departure time falls outside 06:00–22:00 IST.
+  - When departure is between 22:00 and 06:00 IST, the UI displays a prominent notice: *"Metro is closed at this time. Routed via bus and auto."* The returned itinerary contains zero METRO legs.
+- **Night Auto Surcharge:** Applies the +25% night multiplier between 00:00 and 05:00 IST (`autoFareINR` from `packages/engine`). The timeline leg fare and total fare match the API returned price.
+- **Acceptance Criteria:** Unit tests verify metro closed at 22:30, metro open at 21:59, night auto at 00:30 (surcharged), and standard auto at 05:00 (no surcharge).
+
