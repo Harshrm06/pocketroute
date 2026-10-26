@@ -89,9 +89,9 @@ Every dataset is versioned and carries `effectiveFrom` and `source` metadata. No
 |---|---|---|---|
 | Metro lines and stations | `data/pune/metro.json` | Pune Metro official station list, cross-checked with OpenStreetMap (OSM) | Station count per line checked by validation script. Interchange stations must be declared explicitly. |
 | Metro track geometry | `data/geometry/metro/*.geojson` | OSM `railway` ways, stitched, via Overpass | Stitched length within 5% of station-to-station distance sum |
-| Bus corridors | `data/pune/bus_routes.json` | PMPML published route list | Route numbers checked against PMPML site at build time. Unverified routes flagged `"verified": false`. |
+| Bus corridors | `data/pune/bus_routes.json` | PMPML published route list | Route numbers and stop offsets checked against PMPML sources; unverified routes flagged `"verified": false` and scheduleSource labeled `"estimated from configured headway, not PMPML published timetable"`. |
 | Bus geometry | `data/geometry/bus/*.geojson` | OSRM car profile through ordered corridor stops | Each geometry length within 25% of sum of consecutive stop-to-stop road distance |
-| Fare tables | `data/pune/fares.json` | Brief-specified slabs | Schema validation; `effectiveFrom` required |
+| Fare tables | `data/pune/fares.json` | Brief-specified slabs | Schema validation; `effectiveFrom` required; bus ₹10 minimum slab and ₹70 daily pass price flagged `"verified": false`. |
 | Speeds, windows, penalties | `data/pune/params.json` | This PRD, Section 6 | Schema validation |
 | Places (autocomplete seed) | `data/pune/places.json` | Curated list of about 150 landmarks, plus Nominatim fallback | Each entry has lat/lng inside the Pune bounding box |
 | Map style | Remote (OpenFreeMap) | OpenFreeMap vector style | Attribution rendered. Style URL is an env var. |
@@ -810,6 +810,7 @@ Tabs:
 
 ## 21. Changelog
 
+- **2026-10-26 (v1.2.0)**: Transit accuracy, live place search, and multi-bus routing addendum (Section 23). Unverified data points: PMPML route numbers (Bus 140, 23, 13, 24, 29, 103, 149, 204, 115, 158, 159, 11, 12, 94), intermediate stop offsets, ₹10 minimum bus fare slab table, ₹70 PMPML daily pass threshold and price, and 2-minute transfer friction.
 - **2026-10-26 (v1.1.0)**: Added Section 22 specifying collision-free map overlay safe zone, live GPS geolocation with Nominatim reverse geocoding cache, first-mile connector with auto/walk feeder edges, map click-to-pin & marker dragging, timeline-to-map synchronization, 60 fps live commute animation simulator, and time-of-day transit service rules (metro closing window & night auto surcharge).
 - **2026-10-26 (v1.0.1)**: Added `@playwright/test` and `@axe-core/playwright` to Section 11.1 for automated WCAG 2.2 AA accessibility audits and Playwright E2E verification.
 
@@ -876,4 +877,61 @@ Tabs:
   - When departure is between 22:00 and 06:00 IST, the UI displays a prominent notice: *"Metro is closed at this time. Routed via bus and auto."* The returned itinerary contains zero METRO legs.
 - **Night Auto Surcharge:** Applies the +25% night multiplier between 00:00 and 05:00 IST (`autoFareINR` from `packages/engine`). The timeline leg fare and total fare match the API returned price.
 - **Acceptance Criteria:** Unit tests verify metro closed at 22:30, metro open at 21:59, night auto at 00:30 (surcharged), and standard auto at 05:00 (no surcharge).
+
+---
+
+## 23. v1.2.0 Transit Accuracy, Live Place Search, Multi-Bus Routing
+
+### 23.1 Fare Structure, Daily Pass Tip, and Schedule Metadata
+- **Bus Fare Slabs:** Continuous ride distance $d$ (km) on one bus route is priced via `computeBusFare(d)` using `data/pune/fares.json`:
+  - $0 \le d \le 3 \to ₹10$ (any boarding costs at least ₹10)
+  - $3 < d \le 6 \to ₹15$
+  - $6 < d \le 10 \to ₹20$
+  - $10 < d \le 15 \to ₹25$
+  - $15 < d \le 22 \to ₹30$
+  - $22 < d \le 30 \to ₹35$
+  - $d > 30 \to ₹40$
+  - Flagged with `"verified": false` and `"source": "Supplied brief, not yet verified against PMPML fare notice"`.
+- **Daily Pass Tip:** When cumulative bus fares in a route or plan exceed ₹70 (`dailyPassTipThresholdINR`), the plan includes a tip flag: `"Tip: Buy ₹70 PMPML Daily Pass (price unverified)"`. Total fares and legs are not modified by the tip.
+- **Schedule Metadata per Route:** Configured in `data/pune/bus_routes.json` with `firstBusMin` (06:00 / 360), `lastBusMin` (23:00 / 1380), `peakHeadwayMin`, `offPeakHeadwayMin`, `nightHeadwayMin`, `stopOffsetMin` (cumulative non-decreasing minutes from origin to each stop), and `scheduleSource: "estimated from configured headway, not PMPML published timetable"`.
+
+### 23.2 Southern Corridor Network & Origin Attachment Topology
+- **Southern Corridor Stop Nodes:** Upper Indira Nagar Depot, Bibwewadi, Bharat Jyoti, Market Yard, Swargate, MG Road / Camp, Collector Kacheri, Pune Railway Station.
+- **Parallel Corridors:**
+  - Bus 140 & Bus 23: Upper Depot → Bibwewadi → Market Yard → Swargate → Pune Station (shared segment modeled with both route numbers in `routeNumbers`).
+  - Bus 13: Upper Depot → Bibwewadi → Shivajinagar.
+  - Bus 24: Katraj → Padmavati → Swargate → Pune Station → Lohegaon.
+  - Bus 29: Swargate → Magarpatta → Hadapsar.
+  - Bus 103: Katraj → Swargate → Deccan → Kothrud Depot.
+  - Bus 149: Hadapsar → Yerwada → Pimpri → Nigdi.
+  - Bus 204: Swargate → Deccan → Baner → Wakad → Hinjewadi.
+  - Bus 115: Pune Station → Hinjewadi Phase 3.
+  - Bus 158 & 159: Pune Station → Viman Nagar → Wagholi.
+  - Bus 11 & 12: Upper Depot / Katraj → Shivajinagar → PCMC.
+  - Bus 94: Kothrud Depot → Deccan → Pune Station → Hadapsar.
+- **Dynamic Origin/Destination Attachment:**
+  - Any origin or destination attaches to the nearest real transit stops within 3.0 km by haversine distance (up to 5 stops).
+  - If no transit stops are within 3.0 km, search radius expands once to 5.0 km and sets `attachmentRadiusExpanded: true`.
+  - Direct AUTO and CAB edges are created between origin and destination, and between endpoints and nearby hubs, priced via existing fare functions.
+
+### 23.3 Line-Aware Engine with Bus Transfers
+- **Expanded State Space:** `(nodeId, currentLineId, busTransfers, costSpent, timeMinutes)` where `busTransfers` $\in \{0, 1, 2\}$, enforcing a hard maximum of at most 3 buses (2 transfers) per trip.
+- **Same Bus Continuation:** Hops on the same routeNumber are coalesced into a single BUS leg and charged `computeBusFare(totalDistance)` once.
+- **Bus-to-Bus Transfers:** Wait time computed from timetable headway plus `transferFrictionMin = 2` minutes (documented assumption, `verified: false`). Fresh fare charged for the new bus. Increment `busTransfers`.
+- **Pareto Dominance with Transfers:** Label $p$ dominates $q$ iff $p.\mathrm{node} = q.\mathrm{node} \land p.\mathrm{line} = q.\mathrm{line} \land p.t \le q.t \land p.c \le q.c \land p.\mathrm{busTransfers} \le q.\mathrm{busTransfers}$.
+- **Complexity Bound:** $O(E \cdot L \cdot T \cdot \log(V \cdot L \cdot T \cdot B))$ with transfer limit $T = 3$.
+
+### 23.4 Hybrid Place Search
+- **API Endpoint:** `GET /api/v1/geo/search?q=&limit=`
+  - Tier 1: Local fuzzy and prefix/alias search on `data/pune/places.json`.
+  - Tier 2: OpenStreetMap Nominatim search bounded to Pune/PCMC (`73.65,18.72,74.05,18.40`). Throttled to 1 req/sec, 24-hour LRU cache, 2s timeout. Offline mode gracefully returns Tier 1 with `liveSearch: "unavailable"`.
+  - Merge: Tier 1 first, Tier 2 deduplicated within 50 meters. Null-coordinate places excluded from search and routing.
+- **Client Integration:** 250 ms debounce on autocomplete in Dock. Custom points routed via coordinate path identical to GPS.
+
+### 23.5 User Interface Enhancements
+- **Bus Pills:** Display green pill "🚌 Bus 140" and secondary pill "or Bus 23" when multiple routes serve the corridor. Expandable stop list with `aria-expanded`.
+- **Transfer Divider:** Visual divider "🔄 Change Bus at <Hub> (Wait X mins)".
+- **Schedule Pill:** Displays departure/arrival estimates and frequency: *"Departs 5:38 PM → Arrives 6:02 PM • Every 10 mins"* labeled with *"Scheduled estimate, not live"*.
+- **Daily Pass Tip Badge:** Warning border accent badge rendering pass recommendation when plan flag is set.
+
 
